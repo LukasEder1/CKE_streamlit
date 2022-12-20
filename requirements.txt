@@ -5,7 +5,7 @@ nltk
 pandas
 streamlit
 sentence-transformers
-difflib
+cdifflib
 torch
 yake
 summa
