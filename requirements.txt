@@ -1,3 +1,4 @@
+sumy
 numpy
 scipy
 spacy
