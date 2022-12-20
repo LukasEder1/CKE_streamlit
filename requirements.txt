@@ -10,5 +10,4 @@ yake
 summa
 keybert
 spacy
-
-
+git+https://github.com/boudinfl/pke.git
