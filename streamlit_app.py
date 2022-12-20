@@ -138,4 +138,4 @@ if run:
                                     ngram=1)
 
     st.write("Monograms Highlighted")
-    st.markdown(markdown.markdown(html_string1), unsafe_allow_html=True)
+    st.markdown(html_string1, unsafe_allow_html=True)
