@@ -127,7 +127,7 @@ if run:
     st.table(display_keywords(keywords, top_k))
 
     st.write('Added Content')
-    st.dataframe(added_df(added[0]))
+    st.dataframe(added_df(added[0]), use_container_width=True)
 
     
     html_string1 = highlight_keywords(later, 
