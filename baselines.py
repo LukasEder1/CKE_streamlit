@@ -1,5 +1,4 @@
 from sentence_comparision import find_additions_deletions_max_ngram
-import keyword_extraction
 
 
 def additions_as_document(added_idx):
