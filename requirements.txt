@@ -1,12 +1,12 @@
+numpy
+spacy
+scikit-learn
 nltk
 pandas
-numpy
 difflib
 sentence-transformers
 torch
-scikit-learn
 yake
 summa
 keybert
-spacy
 git+https://github.com/boudinfl/pke.git
