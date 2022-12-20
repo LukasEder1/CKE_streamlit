@@ -3,8 +3,9 @@ spacy
 scikit-learn
 nltk
 pandas
-difflib
+streamlit
 sentence-transformers
+difflib
 torch
 yake
 summa
