@@ -1,15 +1,71 @@
-from dis import dis
-from tkinter import Y
 from contrastive_keyword_extraction import contrastive_extraction, final_score, combine_keywords
 import sqlite3
 import pandas as pd
-from tqdm import trange
 import string
-import sentence_comparision
 import sentence_importance
 import streamlit as st
 from baselines import create_inter_frame
 import news_processing
+import nltk
+import numpy as np
+import re
+import markdown
+
+def colour_map(keywords, n):
+    """
+    score -> between 0 -> 1
+    """
+    colouring = {}
+    colours = np.linspace(100, 255, n, endpoint=True)
+    
+    i = 0
+    for kw, score in keywords.items():
+        colouring[kw] = colours[i]
+        i += 1
+    return colouring
+
+def create_stylesheet(keywords, colouring):
+    css_string = "<style>"
+    for label, score in keywords.items():
+        css_string += f" b.{label} {{background-color: rgb(0,{colouring[label]},0);}}"
+
+    css_string += " </style>"
+    
+    return css_string
+
+
+def highlight_keywords(document, intermediate_keywords, changed_indices, matched_dict, ngram, added):
+    sentences = nltk.sent_tokenize(document)
+    
+    g_values = colour_map(intermediate_keywords, len(intermediate_keywords))
+    
+    highlighted_string = ""
+
+    for i in changed_indices:
+        
+        matched_idx, _ = matched_dict[i][0]
+
+        sentence = sentences[int(matched_idx)]
+        
+        print("BEFORE \n", sentence)
+        for keyword in intermediate_keywords.keys():
+            if keyword.lower() in added[i]:
+                
+                sentence = re.sub(keyword.lower(), 
+                    f"<b class=\"{keyword.lower()}\">" +  keyword +"</b>",
+                sentence, flags=re.I)
+
+        print("AFTER \n")
+        
+        highlighted_string += sentence
+       
+    
+    
+    print(highlighted_string)
+    highlighted_string += create_stylesheet(intermediate_keywords, g_values)
+    
+    return highlighted_string
+
 
 st.set_page_config(layout="wide")
 st.header('Contrastive Keyword Extraction')
@@ -41,10 +97,7 @@ article_id = st.selectbox(
     (17313, 17348, 16832, 17313))
 
 
-
-
 col1, col2 = st.columns(2)
-
 
 
 documents = get_doc(article_id)
@@ -75,3 +128,14 @@ if run:
 
     st.write('Added Content')
     st.dataframe(added_df(added[0]))
+
+    
+    html_string1 = highlight_keywords(later, 
+                                    keywords[0],
+                                    changed_sentences[0],
+                                    matched_dicts[0],
+                                    added=added[0], 
+                                    ngram=1)
+
+    st.write("Monograms Highlighted")
+    st.markdown(markdown.markdown(html_string1), unsafe_allow_html=True)
