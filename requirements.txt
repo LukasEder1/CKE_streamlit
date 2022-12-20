@@ -1,0 +1,14 @@
+nltk
+pandas
+numpy
+markdown
+difflib
+sentence-transformers
+torch
+scikit-learn
+yake
+summa
+keybert
+spacy
+
+
