@@ -11,6 +11,8 @@ import numpy as np
 import re
 import markdown
 
+nltk.download("popular")
+
 def colour_map(keywords, n):
     """
     score -> between 0 -> 1
