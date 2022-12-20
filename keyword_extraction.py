@@ -1,6 +1,6 @@
 import pke
 import spacy
-nlp = spacy.load("en_core_web_sm")
+#nlp = spacy.load("en_core_web_sm")
 from keybert import KeyBERT
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -44,7 +44,7 @@ def keybert(documents, ngram_range=(1, 1), stop_words=None, top_n=5, model=None,
 
 def extract_current(document, extractor=pke.unsupervised.YAKE, lang="en", n_best=10):
     extractor = extractor()
-    extractor.load_document(input= nlp(document), language=lang)
+    extractor.load_document(input=document, language=lang)
     
     extractor.candidate_selection()
 
