@@ -9,7 +9,6 @@ import news_processing
 import nltk
 import numpy as np
 import re
-import markdown
 
 nltk.download("popular")
 
