@@ -1,7 +1,6 @@
 nltk
 pandas
 numpy
-markdown
 difflib
 sentence-transformers
 torch
