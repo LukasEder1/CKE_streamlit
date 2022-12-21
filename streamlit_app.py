@@ -67,20 +67,16 @@ def highlight_keywords(document, intermediate_keywords, changed_indices, matched
     
     return highlighted_string
 
-
+with open("docs.pkl", "rb") as file:
+    # read list from file
+    docs = pickle.load(file)
+    
 st.set_page_config(layout="wide")
 st.header('Contrastive Keyword Extraction')
 
 #conn_news = sqlite3.connect('../datasets/ap-matched-sentences.db')
 pd.set_option('display.max_columns', None)
 
-
-def get_doc(article_id=17313):
-    data_news = news_processing.create_data(article_id, conn_news)
-            
-    documents = news_processing.get_documents(data_news)
-
-    return documents
 
 def added_df(added):
     return pd.DataFrame({"sentence": added.keys(), "added": added.values()}).reset_index(drop=True)
@@ -96,25 +92,40 @@ def display_keywords(keywords, k):
 
 article_id = st.selectbox(
     'Choose an article',
-    (17313, 17348, 16832, 17313))
+    (17313, 16159, 17736, 17748, 3299, 90232, 98445, 98447, 106601, 106604))
+
+
+ies = {"TextRank":sentence_importance.text_rank_importance,
+      "Yake Weighted Keyword Count": sentence_importance.yake_weighted_importance,
+      "Yake Unweighted Keyword Count": sentence_importance.yake_unweighted_importance
+      }
+
+matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_search,
+            "Weighted tfidf": sentence_comparision.match_sentences_tfidf_weighted}
 
 
 col1, col2 = st.columns(2)
 
 
-#documents = get_doc(article_id)
+documents = get_doc[article_id]
 
 with col1:
+    ie = st.selectbox(
+    'Importance Estimator',
+    ('TextRank', 'Yake Weighted Keyword Count', 'Yake Unweighted Keyword Count'))
     ngram = st.slider("Max Ngram:", 1, 6)
     former = st.text_area('Orignal Version: ', '', height=400)
     
 
 with col2:
+    match = st.selectbox(
+    'Matching Algorithm',
+    ('Semantic Search', 'Weighted tfidf'))
     top_k = st.slider("Top-k Keywords:", 5, 30)
     later = st.text_area('Later Version: ', '', height=400)
     
 
-run = st.button('run')
+run = st.button('Extract Keywords')
 
 if run:
     keywords, matched_dicts, changed_sentences, added, deleted = contrastive_extraction([former, later], 
@@ -122,7 +133,8 @@ if run:
                                                                         min_ngram=1, 
                                                                         show_changes=False, 
                                                                         symbols_to_remove=string.punctuation,
-                                                                        importance_estimator=sentence_importance.yake_weighted_importance)
+                                                                        importance_estimator=ies[ie],
+                                                                        match_sentences=matchers[match])
 
 
     st.write('Keywords:')
@@ -130,10 +142,11 @@ if run:
 
     st.write('Added Content')
     st.dataframe(added_df(added[0]), use_container_width=True)
-
+    
+    kws = keywords[0]
     
     html_string1 = highlight_keywords(later, 
-                                    keywords[0],
+                                    {k: kws[k] for k in list(kws)[:top_k]},
                                     changed_sentences[0],
                                     matched_dicts[0],
                                     added=added[0], 
