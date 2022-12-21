@@ -1,4 +1,3 @@
-pickle
 sumy
 numpy
 scipy
