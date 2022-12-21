@@ -107,7 +107,7 @@ matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_sea
 col1, col2 = st.columns(2)
 
 
-documents = doc[article_id]
+documents = docs[article_id]
 
 with col1:
     ie = st.selectbox(
