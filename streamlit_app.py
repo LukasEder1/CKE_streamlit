@@ -114,7 +114,7 @@ with col1:
     'Importance Estimator',
     ('TextRank', 'Yake Weighted Keyword Count', 'Yake Unweighted Keyword Count'))
     ngram = st.slider("Max Ngram:", 1, 6)
-    former = st.text_area('Orignal Version: ', '', height=400)
+    former = st.text_area('Orignal Version: ', documents[0], height=400)
     
 
 with col2:
@@ -122,7 +122,7 @@ with col2:
     'Matching Algorithm',
     ('Semantic Search', 'Weighted tfidf'))
     top_k = st.slider("Top-k Keywords:", 5, 30)
-    later = st.text_area('Later Version: ', '', height=400)
+    later = st.text_area('Later Version: ', documents[-1], height=400)
     
 
 run = st.button('Extract Keywords')
