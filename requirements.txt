@@ -1,4 +1,3 @@
-html2text
 pickle
 sumy
 numpy
