@@ -3,9 +3,9 @@ import sqlite3
 import pandas as pd
 import string
 import sentence_importance
+import sentence_comparision
 import streamlit as st
 from baselines import create_inter_frame
-import news_processing
 import nltk
 import numpy as np
 import re
