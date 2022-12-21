@@ -75,13 +75,12 @@ with open("docs.pkl", "rb") as file:
 st.set_page_config(layout="wide")
 st.header('Contrastive Keyword Extraction')
 
-#conn_news = sqlite3.connect('../datasets/ap-matched-sentences.db')
 pd.set_option('display.max_columns', None)
 
 
 def added_df(added):
     return pd.DataFrame({"sentence": added.keys(), "added": added.values()}).reset_index(drop=True)
-#print(documents[0])
+
 
 
 
