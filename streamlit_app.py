@@ -112,8 +112,8 @@ pd.set_option('display.max_columns', None)
 
 def changed_df(added, matched_dict, deleted):
     matched_indices, scores = get_matched_indices(added, matched_dict)
-    return pd.DataFrame({"position original document": added.keys(), 
-        "matched position": matched_indices,
+    return pd.DataFrame({"original sentence position": added.keys(), 
+        "matched sentence position": matched_indices,
         "semantic similarity":scores,
         "added": added.values(),
         "deleted": deleted.values() }).reset_index(drop=True)
@@ -184,7 +184,7 @@ if run:
     
     
 
-    st.write(f"New sentences in later version: {list_to_string(new[0])}")
+    st.write(f"New sentences in the later version are marked as light blue in the following text. The indices of the new sentence are: {list_to_string(new[0])}.")
 
     kws = keywords[0]
     
