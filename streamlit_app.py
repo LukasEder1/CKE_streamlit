@@ -168,8 +168,8 @@ if run:
     st.table(display_keywords(keywords, top_k))
 
     st.write('Added Content')
-    #st.dataframe(added_df(added[0]), use_container_width=True)
-    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
+    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
+
 
     st.dataframe({"sentence": new[0]})
     kws = keywords[0]
