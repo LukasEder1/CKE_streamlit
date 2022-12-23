@@ -132,6 +132,8 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
     additions = {version: {} for version in range(versions-1)}
     
     deletions = {version: {} for version in range(versions-1)}
+
+    new = {version: [] for version in range(versions-1)}
     
     for i in range(versions-1):
         
@@ -151,6 +153,8 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
         additions[i] = adds
         
         deletions[i] = delet
+
+        new[i] = new_indices
         
         
         changed_sentences[i] = changed_indices
@@ -169,7 +173,7 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
         # index n: contrastive keywords for versions n and n+1
         keyword_collection[i] = intermediate_keywords
     
-    return keyword_collection, matched_dicts, changed_sentences, additions, deletions
+    return keyword_collection, matched_dicts, changed_sentences, additions, deletions, new
 
 
 

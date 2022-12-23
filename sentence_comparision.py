@@ -188,8 +188,8 @@ def match_sentences_semantic_search(document_a, document_b, k = 1, model='all-Mi
         for score, idx in zip(top_results[0], top_results[1]):
             
             # fill the matched sentences dictonary
-            #if score > threshold:
-            matched_sentences[query_idx].append((idx, score))
+            if score > threshold:
+                matched_sentences[query_idx].append((idx, score))
     
     return matched_sentences
 

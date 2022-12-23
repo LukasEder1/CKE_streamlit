@@ -5,13 +5,34 @@ import string
 import sentence_importance
 import sentence_comparision
 import streamlit as st
-from baselines import create_inter_frame
 import nltk
 import numpy as np
 import re
 import pickle
 
-nltk.download("popular")
+def get_matched_indices(additions, matched_dict):
+    indices = []
+    scores = []
+    for addition in additions.keys():
+        mathed_idx, score = matched_dict[addition][0]
+        
+        indices.append(int(mathed_idx))
+        
+        scores.append(float(score))
+    
+    return indices, scores
+
+def create_inter_frame(inter_keywords):
+    keywords_dict = list(inter_keywords.values())
+    kws = []
+    scores = []
+    for i in range(len(inter_keywords)):
+
+        for kw, score in keywords_dict[i].items():
+            kws.append(kw)
+            scores.append(score)
+    
+    return kws, scores
 
 def colour_map(keywords, n):
     """
@@ -28,6 +49,7 @@ def colour_map(keywords, n):
 
 def create_stylesheet(keywords, colouring):
     css_string = "<style>"
+    css_string += f" b.new {{background-color: rgb(0, 255, 204);}}"
     for label, score in keywords.items():
         css_string += f" b.{label} {{background-color: rgb(0,{colouring[label]},0);}}"
 
@@ -36,12 +58,13 @@ def create_stylesheet(keywords, colouring):
     return css_string
 
 
-def highlight_keywords(document, intermediate_keywords, changed_indices, matched_dict, ngram, added):
-    sentences = nltk.sent_tokenize(document)
+def highlight_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
+    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
     
+    print(sentences)
     g_values = colour_map(intermediate_keywords, len(intermediate_keywords))
     
-    highlighted_string = ""
+    highlighted_string = sentences.copy()
 
     for i in changed_indices:
         
@@ -49,7 +72,6 @@ def highlight_keywords(document, intermediate_keywords, changed_indices, matched
 
         sentence = sentences[int(matched_idx)]
         
-        print("BEFORE \n", sentence)
         for keyword in intermediate_keywords.keys():
             if keyword.lower() in added[i]:
                 
@@ -57,36 +79,42 @@ def highlight_keywords(document, intermediate_keywords, changed_indices, matched
                     f"<b class=\"{keyword.lower()}\">" +  keyword +"</b>",
                 sentence, flags=re.I)
 
-        print("AFTER \n")
-        
-        highlighted_string += sentence
-       
+        highlighted_string[matched_idx] = sentence
+
+    for j in new:
+        highlighted_string[j] = f"<b class=\"new\">" + sentences[j] + "</b>"
+
+    html_string = " ".join(highlighted_string)
     
+    html_string += create_stylesheet(intermediate_keywords, g_values)
     
-    print(highlighted_string)
-    highlighted_string += create_stylesheet(intermediate_keywords, g_values)
-    
-    return highlighted_string
+    return html_string
 
 with open("docs.pkl", "rb") as file:
     # read list from file
     docs = pickle.load(file)
-    
+
+# BEGIN DOCUMENT
 st.set_page_config(layout="wide")
 st.header('Contrastive Keyword Extraction')
 
 pd.set_option('display.max_columns', None)
 
 
-def added_df(added):
-    return pd.DataFrame({"sentence": added.keys(), "added": added.values()}).reset_index(drop=True)
+def changed_df(added, matched_dict, deleted):
+    matched_indices, scores = get_matched_indices(added, matched_dict)
+    return pd.DataFrame({"position original document": added.keys(), 
+        "matched position": matched_indices,
+        "semantic similarity":scores,
+        "added": added.values(),
+        "deleted": deleted.values() }).reset_index(drop=True)
 
 
 
 
 def display_keywords(keywords, k):
-    inter_kws, inter_scores, delta_int = create_inter_frame(keywords)
-    df = pd.DataFrame({'delta': delta_int, 'keyword': inter_kws, 'score': inter_scores})
+    inter_kws, inter_scores = create_inter_frame(keywords)
+    df = pd.DataFrame({'keyword': inter_kws, 'score': inter_scores})
     
     return df.head(k)
 
@@ -127,7 +155,7 @@ with col2:
 run = st.button('Compare Documents')
 
 if run:
-    keywords, matched_dicts, changed_sentences, added, deleted = contrastive_extraction([former, later], 
+    keywords, matched_dicts, changed_sentences, added, deleted, new = contrastive_extraction([former, later], 
                                                                         max_ngram=ngram,
                                                                         min_ngram=1, 
                                                                         show_changes=False, 
@@ -140,14 +168,17 @@ if run:
     st.table(display_keywords(keywords, top_k))
 
     st.write('Added Content')
-    st.dataframe(added_df(added[0]), use_container_width=True)
-    
+    #st.dataframe(added_df(added[0]), use_container_width=True)
+    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
+
+    st.dataframe({"sentence": new[0]})
     kws = keywords[0]
     
     html_string1 = highlight_keywords(later, 
                                     {k: kws[k] for k in list(kws)[:top_k]},
                                     changed_sentences[0],
                                     matched_dicts[0],
+                                    new[0],
                                     added=added[0], 
                                     ngram=1)
 
