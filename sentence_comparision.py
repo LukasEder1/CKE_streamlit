@@ -108,7 +108,7 @@ def find_additions_deletions_max_ngram(a, b, max_ngram, symbols_to_remove):
     return additions, deletions
 
 
-def match_sentences_tfidf_weighted(document_a, document_b, *args):
+def match_sentences_tfidf_weighted(document_a, document_b, threshold = 0.6, *args):
     
     # Use the sentences in A as queries
     queries = nltk.sent_tokenize(document_a)
@@ -149,13 +149,14 @@ def match_sentences_tfidf_weighted(document_a, document_b, *args):
         #print("score: ", round(maximum_score, 5), "\n")
         #print("Query:", query)
         #print("Matched:", sents[max_idx], "\n")
-        matched_sentences[query_idx] = [(max_idx, round(maximum_score, 5))]
+        if maximum_score > threshold:
+            matched_sentences[query_idx] = [(max_idx, round(maximum_score, 5))]
         
     return matched_sentences
 
 
 
-def match_sentences_semantic_search(document_a, document_b, k = 1, model='all-MiniLM-L6-v2', threshold=0.6):
+def match_sentences_semantic_search(document_a, document_b, threshold=0.6, k = 1, model='all-MiniLM-L6-v2'):
     
     # Model to be used to create Embeddings which we will use for semantic search
     embedder = SentenceTransformer(model)

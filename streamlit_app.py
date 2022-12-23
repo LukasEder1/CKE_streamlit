@@ -141,6 +141,8 @@ matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_sea
             "Weighted tfidf": sentence_comparision.match_sentences_tfidf_weighted}
 
 
+lower_bound = st.slider("semantic matching threshold", 0.0, 1.0, 0.6)
+
 col1, col2 = st.columns(2)
 
 
@@ -150,7 +152,7 @@ with col1:
     ie = st.selectbox(
     'Importance Estimator',
     ('TextRank', 'Yake Weighted Keyword Count', 'Yake Unweighted Keyword Count'))
-    ngram = st.slider("Max Ngram:", 1, 10)
+    ngram = st.slider("Max Ngram:", 1, 10, 2)
     former = st.text_area('Original Version: ', documents[0], height=400)
     
 
@@ -158,7 +160,7 @@ with col2:
     match = st.selectbox(
     'Matching Algorithm',
     ('Semantic Search', 'Weighted tfidf'))
-    top_k = st.slider("Top-k Keywords:", 5, 30)
+    top_k = st.slider("Top-k Keywords:", 5, 30, 10)
     later = st.text_area('Later Version: ', documents[-1], height=400)
 
 run = st.button('Compare Documents')
@@ -170,7 +172,8 @@ if run:
                                                                         show_changes=False, 
                                                                         symbols_to_remove=string.punctuation,
                                                                         importance_estimator=ies[ie],
-                                                                        match_sentences=matchers[match])
+                                                                        match_sentences=matchers[match],
+                                                                        threshold=lower_bound)
 
 
     st.write('Keywords:')

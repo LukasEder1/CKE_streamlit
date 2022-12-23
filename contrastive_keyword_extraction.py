@@ -140,7 +140,7 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
         i_next = i + 1
         
         # matching
-        matched_dict = match_sentences(documents[i], documents[i+1], top_k, matching_model)
+        matched_dict = match_sentences(documents[i], documents[i+1],threshold, top_k, matching_model)
         
         
         matched_dicts[i] = matched_dict
