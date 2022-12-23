@@ -9,6 +9,15 @@ import nltk
 import numpy as np
 import re
 import pickle
+import time
+
+def list_to_string(l):
+    text = ""
+    for i in new[0][:-2]:
+        text += str(i) + ", "
+
+    text += str(new[0][-1])
+    return text
 
 def get_matched_indices(additions, matched_dict):
     indices = []
@@ -141,7 +150,7 @@ with col1:
     ie = st.selectbox(
     'Importance Estimator',
     ('TextRank', 'Yake Weighted Keyword Count', 'Yake Unweighted Keyword Count'))
-    ngram = st.slider("Max Ngram:", 1, 6)
+    ngram = st.slider("Max Ngram:", 1, 10)
     former = st.text_area('Original Version: ', documents[0], height=400)
     
 
@@ -169,9 +178,11 @@ if run:
 
     st.write('Added Content')
     st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
+    
+    
 
+    st.write(f"New sentences in later version: {list_to_string(new[0])}")
 
-    st.dataframe({"sentence": new[0]})
     kws = keywords[0]
     
     html_string1 = highlight_keywords(later, 
