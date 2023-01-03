@@ -13,3 +13,4 @@ yake
 summa
 keybert
 git+https://github.com/boudinfl/pke.git
+st-annotated-text

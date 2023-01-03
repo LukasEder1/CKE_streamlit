@@ -9,7 +9,7 @@ import nltk
 import numpy as np
 import re
 import pickle
-import time
+from annotated_text import annotated_text
 
 def list_to_string(l):
     text = ""
@@ -70,10 +70,8 @@ def create_stylesheet(keywords, colouring):
 
 def highlight_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
     sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
-
-    g_values = colour_map(intermediate_keywords, len(intermediate_keywords))
     
-    highlighted_string = sentences.copy()
+    highlighted_string = []
 
     for i in changed_indices:
         
@@ -81,23 +79,57 @@ def highlight_keywords(document, intermediate_keywords, changed_indices, matched
 
         sentence = sentences[int(matched_idx)]
         
+
         for keyword in intermediate_keywords.keys():
             if keyword.lower() in added[i]:
                 
                 sentence = re.sub(keyword.lower(), 
-                    f"<b class=\"{keyword.lower()}\">" +  keyword +"</b>",
+                    f"(\"" +  keyword + "\" , \"verb\")",
                 sentence, flags=re.I)
-
-        highlighted_string[matched_idx] = sentence
-
+        annotated_text(*sentence)
+    """
     for j in new:
-        highlighted_string[j] = f"<b class=\"new\">" + sentences[j] + "</b>"
+        highlighted_string[j] = f"(" + sentences[j] + ", \"\")"
 
-    html_string = " ".join(highlighted_string)
+    """
+
+    #html_string = " ".join(highlighted_string)
     
-    html_string += create_stylesheet(intermediate_keywords, g_values)
-    
-    return html_string
+    return ""
+
+
+
+def annotate_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
+    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
+    words = [nltk.word_tokenize(sentences[i])  for i in range(len(sentences))]
+
+    for i in changed_indices:
+
+        matched_idx, _ = matched_dict[i][0]
+
+        sentence = sentences[int(matched_idx)]
+        keywords = list(intermediate_keywords.keys())
+
+        for j in range(len(words[matched_idx])):
+            word = words[matched_idx][j]
+
+            if type(word) != str:
+                break
+
+            if word.lower() in added[i] and word.lower() in keywords:
+                words[matched_idx][j] = (f"{word}", f"{round(intermediate_keywords[word.lower()], 5)}")
+
+            else:
+                words[matched_idx][j] += " "
+
+    for i in range(len(words)):
+        if i in changed_indices:
+            annotated_text(*words[i])
+
+        elif i in new:
+            annotated_text((sentences[i], "new"))
+        else:
+            st.write(sentences[i])
 
 def sentence_level_css():
     css_string = "<style>"
@@ -145,16 +177,6 @@ def highlight_latter(document, changed_indices, matched_dict, new):
 
     return html_string
 
-with open("docs.pkl", "rb") as file:
-    # read list from file
-    docs = pickle.load(file)
-
-# BEGIN DOCUMENT
-st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
-st.header('Contrastive Keyword Extraction')
-
-pd.set_option('display.max_columns', None)
-
 
 def changed_df(added, matched_dict, deleted):
     matched_indices, scores = get_matched_indices(added, matched_dict)
@@ -175,6 +197,17 @@ def display_keywords(keywords, k):
     df = pd.DataFrame({'keyword': inter_kws, 'score': inter_scores})
     
     return df.head(k)
+
+with open("docs.pkl", "rb") as file:
+    # read list from file
+    docs = pickle.load(file)
+
+# BEGIN DOCUMENT
+st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
+st.header('Contrastive Keyword Extraction')
+
+pd.set_option('display.max_columns', None)
+
 
 article_id = st.selectbox(
     'Choose an article',
@@ -212,7 +245,7 @@ with col2:
     top_k = st.slider("Top-k Keywords:", 5, 30, 10)
     later = st.text_area('Later Version: ', documents[-1], height=400)
 
-
+show_grams = st.checkbox('show monograms is context (experimental feature)')
 show_verbose = st.checkbox('verbose output')
 
 run = st.button('Compare Documents')
@@ -231,26 +264,24 @@ if run:
     
 
     st.markdown('# Diff-Content and Matched Sentences')
-    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width = True)
+    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
     
     st.markdown('# Contrastive Keywords')
     st.table(display_keywords(keywords, top_k))
 
     
-    st.write(f"New sentences in the later version are marked as light blue in the following text. The indices of the new sentence are: {list_to_string(new[0])}.")
+    #st.write(f"New sentences in the later version are marked as light blue in the following text. The indices of the new sentence are: {list_to_string(new[0])}.")
 
     kws = keywords[0]
     
-    html_string1 = highlight_keywords(later, 
-                                    {k: kws[k] for k in list(kws)[:top_k]},
-                                    changed_sentences[0],
-                                    matched_dicts[0],
-                                    new[0],
-                                    added=added[0], 
-                                    ngram=1)
-
-    st.write("Monograms Highlighted")
-    st.markdown(html_string1, unsafe_allow_html=True)
+    if show_grams:
+        annotate_keywords(later, 
+                        {k: kws[k] for k in list(kws)[:top_k]},
+                        changed_sentences[0],
+                        matched_dicts[0],
+                        new[0],
+                        added=added[0], 
+                        ngram=1)
 
     #htm = highlight_earlier(former, changed_sentences[0], list(deleted[0].keys()))
 
