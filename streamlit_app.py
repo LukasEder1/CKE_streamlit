@@ -231,7 +231,7 @@ if run:
     
 
     st.markdown('# Diff-Content and Matched Sentences')
-    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
+    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_containter_width = True)
     
     st.markdown('# Contrastive Keywords')
     st.table(display_keywords(keywords, top_k))
@@ -252,9 +252,9 @@ if run:
     st.write("Monograms Highlighted")
     st.markdown(html_string1, unsafe_allow_html=True)
 
-    htm = highlight_earlier(former, changed_sentences[0], list(deleted[0].keys()))
+    #htm = highlight_earlier(former, changed_sentences[0], list(deleted[0].keys()))
 
-    st.markdown(htm, unsafe_allow_html=True)
+    #st.markdown(htm, unsafe_allow_html=True)
     if show_verbose:
         st.markdown("## Sentence Importance Calculation")
 
