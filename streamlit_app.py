@@ -245,7 +245,7 @@ with col2:
     top_k = st.slider("Top-k Keywords:", 5, 30, 10)
     later = st.text_area('Later Version: ', documents[-1], height=400)
 
-show_grams = st.checkbox('show monograms is context (experimental feature)')
+show_grams = st.checkbox('show monograms in context (experimental feature)')
 show_verbose = st.checkbox('verbose output')
 
 run = st.button('Compare Documents')
