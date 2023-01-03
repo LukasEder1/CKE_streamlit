@@ -356,8 +356,8 @@ def rank_yake(documents, keyword_counts, top_n=5):
         # return the top_n most important indices
         important_indices[current] = top_keys[:top_n]
         
-        ranking[current] = sorted_counts
-        
+        ranking[current] = {k: v / sum(sorted_counts.values()) for k, v in sorted_counts.items()}
+
         current += 1
     
     return important_sentences, important_indices, ranking
@@ -372,11 +372,11 @@ def yake_weighted_importance(documents):
     return ranking
 
 
-def yake_unweighted_importance(documents, ngram):
+def yake_unweighted_importance(documents):
     
-    weighted_keyword_counts = yake_keyword_frequency(documents, ngram_size=3)
+    keyword_counts = yake_keyword_frequency(documents, ngram_size=3)
     
-    sentences, imp_indices, ranking = rank_yake(documents, weighted_keyword_counts)
+    sentences, imp_indices, ranking = rank_yake(documents, keyword_counts)
     
     return ranking
 

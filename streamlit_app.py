@@ -64,13 +64,13 @@ def create_stylesheet(keywords, colouring):
 
     css_string += " </style>"
     
+    
     return css_string
 
 
 def highlight_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
     sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
-    
-    print(sentences)
+
     g_values = colour_map(intermediate_keywords, len(intermediate_keywords))
     
     highlighted_string = sentences.copy()
@@ -99,12 +99,58 @@ def highlight_keywords(document, intermediate_keywords, changed_indices, matched
     
     return html_string
 
+def sentence_level_css():
+    css_string = "<style>"
+    css_string += f" b.del {{background-color: rgb(255, 0, 0);}}"
+    css_string += f"b.changed {{background-color: rgb(255, 255, 0);}}"
+    css_string += "</style"
+
+    return css_string
+
+def highlight_earlier(document, changed_indices, deleted):
+
+    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
+
+    highlighted_string = sentences.copy()
+
+    for i in changed_indices:
+
+        highlighted_string[i] = f"<b class=\"changed\">" + sentences[i] + "</b>"
+
+
+
+    html_string = " ".join(highlighted_string)
+
+    html_string += sentence_level_css()
+
+    return html_string
+
+def highlight_latter(document, changed_indices, matched_dict, new):
+
+    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
+
+    highlighted_string = sentences.copy()
+
+    for i in changed_indices:
+        
+        matched_idx, _ = matched_dict[i][0]
+
+        highlighted_string[matched_idx] = f"<b class=\"matched\">" + sentences[int(matched_idx)] + "</b>"
+
+
+
+    html_string = " ".join(highlighted_string)
+
+    html_string += sentence_level_css()
+
+    return html_string
+
 with open("docs.pkl", "rb") as file:
     # read list from file
     docs = pickle.load(file)
 
 # BEGIN DOCUMENT
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 st.header('Contrastive Keyword Extraction')
 
 pd.set_option('display.max_columns', None)
@@ -119,7 +165,10 @@ def changed_df(added, matched_dict, deleted):
         "deleted": deleted.values() }).reset_index(drop=True)
 
 
+def create_ranking_df(rank):
 
+    return pd.DataFrame({"Sentence Position": list(rank.keys()),
+                        "Importance Score": list(rank.values())})
 
 def display_keywords(keywords, k):
     inter_kws, inter_scores = create_inter_frame(keywords)
@@ -163,10 +212,13 @@ with col2:
     top_k = st.slider("Top-k Keywords:", 5, 30, 10)
     later = st.text_area('Later Version: ', documents[-1], height=400)
 
+
+show_verbose = st.checkbox('verbose output')
+
 run = st.button('Compare Documents')
 
 if run:
-    keywords, matched_dicts, changed_sentences, added, deleted, new = contrastive_extraction([former, later], 
+    keywords, matched_dicts, changed_sentences, added, deleted, new, ranking = contrastive_extraction([former, later], 
                                                                         max_ngram=ngram,
                                                                         min_ngram=1, 
                                                                         show_changes=False, 
@@ -176,14 +228,15 @@ if run:
                                                                         threshold=lower_bound)
 
 
-    st.write('Keywords:')
-    st.table(display_keywords(keywords, top_k))
+    
 
-    st.write('Added Content')
+    st.markdown('# Diff-Content and Matched Sentences')
     st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
     
-    
+    st.markdown('# Contrastive Keywords')
+    st.table(display_keywords(keywords, top_k))
 
+    
     st.write(f"New sentences in the later version are marked as light blue in the following text. The indices of the new sentence are: {list_to_string(new[0])}.")
 
     kws = keywords[0]
@@ -198,3 +251,21 @@ if run:
 
     st.write("Monograms Highlighted")
     st.markdown(html_string1, unsafe_allow_html=True)
+
+    htm = highlight_earlier(former, changed_sentences[0], list(deleted[0].keys()))
+
+    st.markdown(htm, unsafe_allow_html=True)
+    if show_verbose:
+        st.markdown("## Sentence Importance Calculation")
+
+        rcol1, rcol2 = st.columns(2)
+        ranking_earlier = create_ranking_df(ranking[0])
+        ranking_latter = create_ranking_df(ranking[1])
+        
+        with rcol1:
+            st.markdown("Sentence Importance Earlier Version")
+            st.table(ranking_earlier)
+
+        with rcol2:
+            st.markdown("Sentence Importance Latter Version")
+            st.table(ranking_latter)

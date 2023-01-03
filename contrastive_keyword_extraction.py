@@ -173,7 +173,7 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
         # index n: contrastive keywords for versions n and n+1
         keyword_collection[i] = intermediate_keywords
     
-    return keyword_collection, matched_dicts, changed_sentences, additions, deletions, new
+    return keyword_collection, matched_dicts, changed_sentences, additions, deletions, new, ranking
 
 
 
