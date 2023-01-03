@@ -231,7 +231,7 @@ if run:
     
 
     st.markdown('# Diff-Content and Matched Sentences')
-    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_containter_width = True)
+    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width = True)
     
     st.markdown('# Contrastive Keywords')
     st.table(display_keywords(keywords, top_k))
