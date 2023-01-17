@@ -209,9 +209,13 @@ st.header('Contrastive Keyword Extraction')
 pd.set_option('display.max_columns', None)
 
 
+
 article_id = st.selectbox(
-    'Choose an article',
-    (17313, 16159, 17736, 17748, 3299, 90232, 98445, 98447, 106601, 106604))
+    'Choose a Document or try it with your own one.',
+    ("Custom", "Article 17313", "Article 16159", "Article 17736", 
+    "Article 17748", "Policy 90232", "Policy 98445", "Policy 98447",
+     "Policy 106601", "Policy 106604"))
+
 
 
 ies = {"TextRank":sentence_importance.text_rank_importance,
@@ -223,30 +227,43 @@ matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_sea
             "Weighted tfidf": sentence_comparision.match_sentences_tfidf_weighted}
 
 
-lower_bound = st.slider("semantic matching threshold", 0.0, 1.0, 0.6)
+
 
 col1, col2 = st.columns(2)
 
-
-documents = docs[article_id]
+if article_id == "Custom":
+    documents = ["", ""]
+else:
+    documents = docs[int(article_id.split(" ")[1])]
 
 with col1:
-    ie = st.selectbox(
-    'Importance Estimator',
-    ('TextRank', 'Yake Weighted Keyword Count', 'Yake Unweighted Keyword Count'))
+
     ngram = st.slider("Max Ngram:", 1, 10, 2)
     former = st.text_area('Original Version: ', documents[0], height=400)
     
 
 with col2:
-    match = st.selectbox(
-    'Matching Algorithm',
-    ('Semantic Search', 'Weighted tfidf'))
+    
     top_k = st.slider("Top-k Keywords:", 5, 30, 10)
     later = st.text_area('Later Version: ', documents[-1], height=400)
 
-show_grams = st.checkbox('show monograms is context (experimental feature)')
-show_verbose = st.checkbox('verbose output')
+with st.expander("Advanced Settings"):
+    ie = st.selectbox(
+    'Importance Estimator',
+    ('TextRank', 'Yake Weighted Keyword Count', 'Yake Unweighted Keyword Count'))
+
+    match = st.selectbox(
+    'Matching Algorithm',
+    ('Semantic Search', 'Weighted tfidf'))
+
+    lower_bound = st.slider("semantic matching threshold", 0.0, 1.0, 0.6)
+
+    stopwords = st.multiselect("stopwords",
+                            list(set(nltk.word_tokenize(later))),
+                            [])
+
+    show_grams = st.checkbox('show monograms in context (experimental feature)')
+    show_verbose = st.checkbox('verbose output')
 
 run = st.button('Compare Documents')
 
@@ -258,10 +275,8 @@ if run:
                                                                         symbols_to_remove=string.punctuation,
                                                                         importance_estimator=ies[ie],
                                                                         match_sentences=matchers[match],
-                                                                        threshold=lower_bound)
-
-
-    
+                                                                        threshold=lower_bound,
+                                                                        extra_stopwords=[stopword.lower() for stopword in stopwords])
 
     st.markdown('# Diff-Content and Matched Sentences')
     st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
