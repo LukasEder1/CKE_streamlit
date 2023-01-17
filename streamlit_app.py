@@ -213,6 +213,7 @@ pd.set_option('display.max_columns', None)
 
 
 nltk.download("punkt")
+nltk.download('stopwords')
 
 article_id = st.selectbox(
     'Choose a Document or try it with your own one.',
