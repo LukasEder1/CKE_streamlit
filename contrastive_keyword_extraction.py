@@ -11,23 +11,17 @@ def normalize_scores(keywords):
 
         return {}
 
-    max_value = max([item[1] for item in keywords])
-
-    min_value = min([item[1] for item in keywords])
-    
+    max_value = max([v for v in keywords.values()])
     print(max_value)
-    
+    min_value = min([v for v in keywords.values()])
     print(min_value)
-   
-
     result = {}
 
-    for item in keywords:
+    for key, value in keywords.items():
         
-        print(item)
-        normalized_score = (item[1] - float(min_value))/(float(max_value) - float(min_value))
+        normalized_score = (value - float(min_value))/(float(max_value) - float(min_value))
 
-        result[item[0]] = abs(1 - normalized_score)
+        result[key] = abs(1 - normalized_score)
 
  
 
@@ -36,7 +30,7 @@ def normalize_scores(keywords):
 
 def final_score(document, version, changed_indices, new_indices, matched_dict, ranking, I_c, max_ngram, 
                 additions, combinator=utilities.alpha_combination, k=0, alpha_gamma=0.5, min_ngram = 1,
-                symbols_to_remove=string.punctuation):
+                symbols_to_remove=string.punctuation, extra_stopwords=[]):
     
     
     
@@ -65,11 +59,11 @@ def final_score(document, version, changed_indices, new_indices, matched_dict, r
         
         # Combine the two scores using a combinator
         s_c = combinator(I_ci, I_si, alpha_gamma)
-        
         # Compute the Dictonary of frequency for all ngrams up to "max_ngram" in matched sentence
         current_freqs = utilities.build_sentence_freqs_max_ngram(sentences[matched_idx], 
                                                        higher_ngram=max_ngram, lower_ngram=min_ngram,
-                                                       symbols_to_remove=symbols_to_remove)
+                                                       symbols_to_remove=symbols_to_remove,
+                                                       extra_stopwords=extra_stopwords)
         
         
         # loop over all ngrams/freqs in the sentence
@@ -89,7 +83,8 @@ def final_score(document, version, changed_indices, new_indices, matched_dict, r
         # Compute the Dictonary of frequency for all ngrams up to "max_ngram" in new sentence
         current_freqs = utilities.build_sentence_freqs_max_ngram(sentences[i], 
                                                        higher_ngram=max_ngram, lower_ngram=min_ngram,
-                                                       symbols_to_remove=symbols_to_remove)
+                                                       symbols_to_remove=symbols_to_remove,
+                                                       extra_stopwords=extra_stopwords)
         
         
         for ngram, freq in current_freqs.items():
@@ -101,9 +96,10 @@ def final_score(document, version, changed_indices, new_indices, matched_dict, r
     # normalize keywords
     # total "IMPORTANCE COUNT
     total_count = sum(keywords.values())
+    print(total_count)
     
     # sort keywords + normalize
-    keywords = {k: v/total_count  for k, v in sorted(keywords.items(), key=lambda item: item[1], 
+    keywords = {k: float(v)/float(total_count)  for k, v in sorted(keywords.items(), key=lambda item: item[1], 
                                                  reverse=True)}
     
     return keywords
@@ -113,7 +109,9 @@ def final_score(document, version, changed_indices, new_indices, matched_dict, r
 def contrastive_extraction(documents, max_ngram, min_ngram=1, 
                            importance_estimator= sentence_importance.text_rank_importance,
                            combinator=utilities.alpha_combination, threshold=0.6, top_k=1, alpha_gamma=0.5, 
-                           matching_model='all-MiniLM-L6-v2', w0 = 3, w1 = 1, w2 = 1, match_sentences =match_sentences_semantic_search, show_changes=False, symbols_to_remove=[","]):
+                           matching_model='all-MiniLM-L6-v2', w0 = 3, w1 = 1, w2 = 1, 
+                           match_sentences =match_sentences_semantic_search, show_changes=False,
+                           symbols_to_remove=[","], extra_stopwords=[]):
     
     versions = len(documents)
     
@@ -167,7 +165,8 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
         intermediate_keywords = final_score(documents[i+1], i+1, changed_indices, new_indices, matched_dict, 
                                             ranking, I_c, max_ngram, adds, combinator, 
                                             alpha_gamma=alpha_gamma, min_ngram= min_ngram, 
-                                            symbols_to_remove=symbols_to_remove)
+                                            symbols_to_remove=symbols_to_remove,
+                                            extra_stopwords=extra_stopwords)
         
         # add to overall dictonary
         # index n: contrastive keywords for versions n and n+1

@@ -11,9 +11,8 @@ def build_sentence_freqs_ngram(sentence, n, symbols_to_remove, extra_stopwords =
     
     out: dictonary of lowercased ngram frequencies without stopwords
     """
-
     stop_words = nltk.corpus.stopwords.words("english") + extra_stopwords
-    
+
     freqs = {}
     
     words = nltk.word_tokenize(sentence)
@@ -42,7 +41,6 @@ def build_sentence_freqs_max_ngram(sentence, higher_ngram, lower_ngram = 1, symb
     """
     
     freqs = {}
-    
     for n in range(lower_ngram, higher_ngram+1):
         freqs.update(build_sentence_freqs_ngram(sentence, n, symbols_to_remove, extra_stopwords))
 
