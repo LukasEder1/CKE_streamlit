@@ -31,6 +31,9 @@ def get_matched_indices(additions, matched_dict):
     
     return indices, scores
 
+def is_empty(document):
+    return len(document) == 0 or document.isspace()
+
 def create_inter_frame(inter_keywords):
     keywords_dict = list(inter_keywords.values())
     kws = []
@@ -236,6 +239,7 @@ if article_id == "Custom":
 else:
     documents = docs[int(article_id.split(" ")[1])]
 
+
 with col1:
 
     ngram = st.slider("Max Ngram:", 1, 10, 2)
@@ -256,62 +260,67 @@ with st.expander("Advanced Settings"):
     'Matching Algorithm',
     ('Semantic Search', 'Weighted tfidf'))
 
-    lower_bound = st.slider("semantic matching threshold", 0.0, 1.0, 0.6)
+    lower_bound = st.slider("Semantic matching threshold", 0.0, 1.0, 0.6)
 
-    stopwords = st.multiselect("stopwords",
+    stopwords = st.multiselect("Remove additional stopwords",
                             list(set(nltk.word_tokenize(later))),
                             [])
 
-    show_grams = st.checkbox('show monograms in context (experimental feature)')
-    show_verbose = st.checkbox('verbose output')
+    show_grams = st.checkbox('Show monograms in context (experimental feature)')
+    show_verbose = st.checkbox('Show Sentence Ranking (depends on Importance Estimator)')
 
 run = st.button('Compare Documents')
 
 if run:
-    keywords, matched_dicts, changed_sentences, added, deleted, new, ranking = contrastive_extraction([former, later], 
-                                                                        max_ngram=ngram,
-                                                                        min_ngram=1, 
-                                                                        show_changes=False, 
-                                                                        symbols_to_remove=string.punctuation,
-                                                                        importance_estimator=ies[ie],
-                                                                        match_sentences=matchers[match],
-                                                                        threshold=lower_bound,
-                                                                        extra_stopwords=[stopword.lower() for stopword in stopwords])
-
-    st.markdown('# Diff-Content and Matched Sentences')
-    st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
-    
-    st.markdown('# Contrastive Keywords')
-    st.table(display_keywords(keywords, top_k))
+    if is_empty(former) or is_empty(later):
+        st.error('Please make sure that none of the Documents are empty.')
 
     
-    #st.write(f"New sentences in the later version are marked as light blue in the following text. The indices of the new sentence are: {list_to_string(new[0])}.")
+    else:
+        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking = contrastive_extraction([former, later], 
+                                                                            max_ngram=ngram,
+                                                                            min_ngram=1, 
+                                                                            show_changes=False, 
+                                                                            symbols_to_remove=string.punctuation,
+                                                                            importance_estimator=ies[ie],
+                                                                            match_sentences=matchers[match],
+                                                                            threshold=lower_bound,
+                                                                            extra_stopwords=[stopword.lower() for stopword in stopwords])
 
-    kws = keywords[0]
-    
-    if show_grams:
-        annotate_keywords(later, 
-                        {k: kws[k] for k in list(kws)[:top_k]},
-                        changed_sentences[0],
-                        matched_dicts[0],
-                        new[0],
-                        added=added[0], 
-                        ngram=1)
-
-    #htm = highlight_earlier(former, changed_sentences[0], list(deleted[0].keys()))
-
-    #st.markdown(htm, unsafe_allow_html=True)
-    if show_verbose:
-        st.markdown("## Sentence Importance Calculation")
-
-        rcol1, rcol2 = st.columns(2)
-        ranking_earlier = create_ranking_df(ranking[0])
-        ranking_latter = create_ranking_df(ranking[1])
+        st.markdown('# Diff-Content and Matched Sentences')
+        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
         
-        with rcol1:
-            st.markdown("Sentence Importance Earlier Version")
-            st.table(ranking_earlier)
+        st.markdown('# Contrastive Keywords')
+        st.table(display_keywords(keywords, top_k))
 
-        with rcol2:
-            st.markdown("Sentence Importance Latter Version")
-            st.table(ranking_latter)
+        
+        #st.write(f"New sentences in the later version are marked as light blue in the following text. The indices of the new sentence are: {list_to_string(new[0])}.")
+
+        kws = keywords[0]
+        
+        if show_grams:
+            annotate_keywords(later, 
+                            {k: kws[k] for k in list(kws)[:top_k]},
+                            changed_sentences[0],
+                            matched_dicts[0],
+                            new[0],
+                            added=added[0], 
+                            ngram=1)
+
+        #htm = highlight_earlier(former, changed_sentences[0], list(deleted[0].keys()))
+
+        #st.markdown(htm, unsafe_allow_html=True)
+        if show_verbose:
+            st.markdown("## Sentence Importance Calculation")
+
+            rcol1, rcol2 = st.columns(2)
+            ranking_earlier = create_ranking_df(ranking[0])
+            ranking_latter = create_ranking_df(ranking[1])
+            
+            with rcol1:
+                st.markdown("Sentence Importance Earlier Version")
+                st.table(ranking_earlier)
+
+            with rcol2:
+                st.markdown("Sentence Importance Latter Version")
+                st.table(ranking_latter)
