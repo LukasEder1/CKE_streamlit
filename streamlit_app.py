@@ -46,66 +46,10 @@ def create_inter_frame(inter_keywords):
     
     return kws, scores
 
-def colour_map(keywords, n):
-    """
-    score -> between 0 -> 1
-    """
-    colouring = {}
-    colours = np.linspace(100, 255, n, endpoint=True)
-    
-    i = 0
-    for kw, score in keywords.items():
-        colouring[kw] = colours[i]
-        i += 1
-    return colouring
-
-def create_stylesheet(keywords, colouring):
-    css_string = "<style>"
-    css_string += f" b.new {{background-color: rgb(0, 255, 204);}}"
-    for label, score in keywords.items():
-        css_string += f" b.{label} {{background-color: rgb(0,{colouring[label]},0);}}"
-
-    css_string += " </style>"
-    
-    
-    return css_string
-
-
-def highlight_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
-    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
-    
-    highlighted_string = []
-
-    for i in changed_indices:
-        
-        matched_idx, _ = matched_dict[i][0]
-
-        sentence = sentences[int(matched_idx)]
-        
-
-        for keyword in intermediate_keywords.keys():
-            if keyword.lower() in added[i]:
-                
-                sentence = re.sub(keyword.lower(), 
-                    f"(\"" +  keyword + "\" , \"verb\")",
-                sentence, flags=re.I)
-        annotated_text(*sentence)
-    """
-    for j in new:
-        highlighted_string[j] = f"(" + sentences[j] + ", \"\")"
-
-    """
-
-    #html_string = " ".join(highlighted_string)
-    
-    return ""
-
-
-
 def annotate_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
     sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
     words = [nltk.word_tokenize(sentences[i])  for i in range(len(sentences))]
-
+    matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
     for i in changed_indices:
 
         matched_idx, _ = matched_dict[i][0]
@@ -126,60 +70,12 @@ def annotate_keywords(document, intermediate_keywords, changed_indices, matched_
                 words[matched_idx][j] += " "
 
     for i in range(len(words)):
-        if i in changed_indices:
+        if i in matched_and_changed:
             annotated_text(*words[i])
-
         elif i in new:
             annotated_text((sentences[i], "new"))
         else:
             st.write(sentences[i])
-
-def sentence_level_css():
-    css_string = "<style>"
-    css_string += f" b.del {{background-color: rgb(255, 0, 0);}}"
-    css_string += f"b.changed {{background-color: rgb(255, 255, 0);}}"
-    css_string += "</style"
-
-    return css_string
-
-def highlight_earlier(document, changed_indices, deleted):
-
-    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
-
-    highlighted_string = sentences.copy()
-
-    for i in changed_indices:
-
-        highlighted_string[i] = f"<b class=\"changed\">" + sentences[i] + "</b>"
-
-
-
-    html_string = " ".join(highlighted_string)
-
-    html_string += sentence_level_css()
-
-    return html_string
-
-def highlight_latter(document, changed_indices, matched_dict, new):
-
-    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
-
-    highlighted_string = sentences.copy()
-
-    for i in changed_indices:
-        
-        matched_idx, _ = matched_dict[i][0]
-
-        highlighted_string[matched_idx] = f"<b class=\"matched\">" + sentences[int(matched_idx)] + "</b>"
-
-
-
-    html_string = " ".join(highlighted_string)
-
-    html_string += sentence_level_css()
-
-    return html_string
-
 
 def changed_df(added, matched_dict, deleted):
     matched_indices, scores = get_matched_indices(added, matched_dict)
@@ -290,7 +186,7 @@ if run:
                                                                             extra_stopwords=[stopword.lower() for stopword in stopwords])
 
         st.markdown('# Diff-Content and Matched Sentences')
-        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
+        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
         
         st.markdown('# Contrastive Keywords')
         st.table(display_keywords(keywords, top_k))
