@@ -289,7 +289,7 @@ if run:
                                                                             extra_stopwords=[stopword.lower() for stopword in stopwords])
 
         st.markdown('# Diff-Content and Matched Sentences')
-        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
+        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
         
         st.markdown('# Contrastive Keywords')
         st.table(display_keywords(keywords, top_k))
