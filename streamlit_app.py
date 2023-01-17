@@ -266,8 +266,8 @@ with st.expander("Advanced Settings"):
                             list(set(nltk.word_tokenize(later))),
                             [])
 
-    show_grams = st.checkbox('Show monograms in context (experimental feature)')
-    show_verbose = st.checkbox('Show Sentence Ranking (depends on Importance Estimator)')
+show_grams = st.checkbox('show monograms in context (experimental feature)')
+show_verbose = st.checkbox('verbose output')
 
 run = st.button('Compare Documents')
 
@@ -321,6 +321,6 @@ if run:
                 st.markdown("Sentence Importance Earlier Version")
                 st.table(ranking_earlier)
 
-            with rcol2:
-                st.markdown("Sentence Importance Latter Version")
-                st.table(ranking_latter)
+        with rcol2:
+            st.markdown("Sentence Importance Latter Version")
+            st.table(ranking_latter)
