@@ -212,6 +212,7 @@ st.header('Contrastive Keyword Extraction')
 pd.set_option('display.max_columns', None)
 
 
+nltk.download("punkt")
 
 article_id = st.selectbox(
     'Choose a Document or try it with your own one.',
@@ -266,8 +267,8 @@ with st.expander("Advanced Settings"):
                             list(set(nltk.word_tokenize(later))),
                             [])
 
-show_grams = st.checkbox('show monograms in context (experimental feature)')
-show_verbose = st.checkbox('verbose output')
+    show_grams = st.checkbox('Show monograms in context (experimental feature)')
+    show_verbose = st.checkbox('Show Sentence Ranking (depends on the Importance Estimator)')
 
 run = st.button('Compare Documents')
 
