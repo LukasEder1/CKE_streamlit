@@ -94,7 +94,7 @@ with col1:
 with col2:
     
     top_k = st.slider("Top-k Keywords:", 5, 30, 10)
-    later = st.text_area('Later Version: ', documents[-1], height=400)
+    later = st.text_area('Latter Version: ', documents[-1], height=400)
 
 with st.expander("Advanced Settings"):
     ie = st.selectbox(
@@ -112,7 +112,7 @@ with st.expander("Advanced Settings"):
                             [])
 
     show_grams = st.checkbox('Show monograms in context (experimental feature)')
-    show_verbose = st.checkbox('Show Sentence Ranking (depends on the Importance Estimator)')
+    show_importance = st.checkbox('Show Sentence Ranking (depends on the Importance Estimator)')
 
 run = st.button('Compare Documents')
 
@@ -122,7 +122,7 @@ if run:
 
     
     else:
-        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking = contrastive_extraction([former, later], 
+        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking, removed = contrastive_extraction([former, later], 
                                                                             max_ngram=ngram,
                                                                             min_ngram=1, 
                                                                             show_changes=False, 
@@ -132,10 +132,10 @@ if run:
                                                                             threshold=lower_bound,
                                                                             extra_stopwords=[stopword.lower() for stopword in stopwords])
 
-        st.markdown('# Diff-Content and Matched Sentences')
-        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
+        st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
+        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), user_container_width=True)
         
-        st.markdown('# Contrastive Keywords')
+        st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))
 
         
@@ -144,6 +144,7 @@ if run:
         kws = keywords[0]
         
         if show_grams:
+            st.markdown("<h1 style='text-align: center;'>Keywords in Context</h1>", unsafe_allow_html=True)
             annotate_keywords(later, 
                             {k: kws[k] for k in list(kws)[:top_k]},
                             changed_sentences[0],
@@ -152,20 +153,16 @@ if run:
                             added=added[0], 
                             ngram=1)
 
+
         #htm = highlight_earlier(former, changed_sentences[0], list(deleted[0].keys()))
-
+        
         #st.markdown(htm, unsafe_allow_html=True)
-        if show_verbose:
-            st.markdown("## Sentence Importance Calculation")
+        if show_importance:
+            show_sentence_importances(ranking, former, later)
 
-            rcol1, rcol2 = st.columns(2)
-            ranking_earlier = create_ranking_df(ranking[0])
-            ranking_latter = create_ranking_df(ranking[1])
-            
-            with rcol1:
-                st.markdown("Sentence Importance Earlier Version")
-                st.table(ranking_earlier)
-
-            with rcol2:
-                st.markdown("Sentence Importance Latter Version")
-                st.table(ranking_latter)
+        highlight_changes(former,
+                                later,
+                                changed_sentences[0],
+                                matched_dicts[0],
+                                new[0],
+                                removed[0])
