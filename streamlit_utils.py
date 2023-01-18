@@ -45,6 +45,7 @@ def annotate_keywords(document, intermediate_keywords, changed_indices, matched_
     sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
     words = [nltk.word_tokenize(sentences[i])  for i in range(len(sentences))]
     matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
+    
     for i in changed_indices:
 
         matched_idx, _ = matched_dict[i][0]
@@ -91,3 +92,67 @@ def display_keywords(keywords, k):
     df = pd.DataFrame({'keyword': inter_kws, 'score': inter_scores})
     
     return df.head(k)
+
+
+def highlight_changes(former, later, changed_indices, matched_dict, new, removed):
+
+    # Setup
+
+    former_sentences = nltk.sent_tokenize(former.replace("$", "&#36;"))
+
+    later_sentences = nltk.sent_tokenize(later.replace("$", "&#36;"))
+
+    matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
+    
+
+    # Begin Document
+
+    st.markdown("<h1 style='text-align: center;'>Sentence Matching Results</h1>", unsafe_allow_html=True)
+
+    col_former, col_later = st.columns(2)
+    with col_former:
+        st.markdown("<h2 style='text-align: center;'>Original Document</h2>", unsafe_allow_html=True)
+
+        # use the annotated component to highlight text
+        for i in range(len(former_sentences)):
+            if i in removed:
+                annotated_text((former_sentences[i], "deleted", "#ff6666"))
+            elif i in changed_indices:
+                annotated_text((former_sentences[i], f"{matched_dict[i][0][0]}", "#f2f2f2"))
+            else:
+                st.write(former_sentences[i])
+
+    with col_later:
+        st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+
+        for i in range(len(later_sentences)):
+            if i in new:
+                annotated_text((later_sentences[i], "new", "#4dff4d"))
+            elif i in matched_and_changed:
+                annotated_text((later_sentences[i], f"{i}", "#f2f2f2"))
+            else:
+                st.write(later_sentences[i])
+
+
+def show_sentence_importances(ranking, former, later):
+
+    st.markdown("<h1 style='text-align: center;'>Sentence Importance Calculation</h1>", unsafe_allow_html=True)
+
+    former_sentences = nltk.sent_tokenize(former.replace("$", "&#36;"))
+
+    later_sentences = nltk.sent_tokenize(later.replace("$", "&#36;"))
+
+    rcol1, rcol2 = st.columns(2)
+    ranking_earlier = create_ranking_df(ranking[0])
+    ranking_latter = create_ranking_df(ranking[1])
+    with rcol1:
+        st.markdown("<h3 style='text-align: center;'>Original Document</h3>", unsafe_allow_html=True)
+        st.table(ranking_earlier)
+        for i in list(ranking[0].keys()):
+            annotated_text((former_sentences[i], f"{round(ranking[0][i], 4)}", "#f2f2f2"))
+
+    with rcol2:
+        st.markdown("<h3 style='text-align: center;'>Latter Document</h3>", unsafe_allow_html=True)
+        st.table(ranking_latter)
+        for i in list(ranking[1].keys()):
+            annotated_text((later_sentences[i], f"{round(ranking[1][i], 4)}", "#f2f2f2"))
