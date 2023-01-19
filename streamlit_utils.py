@@ -6,14 +6,6 @@ import re
 import pickle
 from annotated_text import annotated_text
 
-def list_to_string(l):
-    text = ""
-    for i in new[0][:-2]:
-        text += str(i) + ", "
-
-    text += str(new[0][-1])
-    return text
-
 def get_matched_indices(additions, matched_dict):
     indices = []
     scores = []

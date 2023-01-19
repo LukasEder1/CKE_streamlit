@@ -49,6 +49,7 @@ best fashions from the literature. We show that the Transformer generalizes nice
 other duties by means of making use of it effectively to English constituency parsing each with
 large and confined education data. 
 """]
+
 # BEGIN DOCUMENT
 st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 st.header('Contrastive Keyword Extraction')
@@ -133,7 +134,7 @@ if run:
                                                                             extra_stopwords=[stopword.lower() for stopword in stopwords])
 
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), user_container_width=True)
+        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
         
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))

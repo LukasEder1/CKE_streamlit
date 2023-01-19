@@ -28,18 +28,20 @@ def normalize_scores(keywords):
     return result
 
 
-def final_score(document, version, changed_indices, new_indices, matched_dict, ranking, I_c, max_ngram, 
-                additions, combinator=utilities.alpha_combination, k=0, alpha_gamma=0.5, min_ngram = 1,
+def final_score(documents, changed_indices, new_indices, matched_dict, ranking, I_c, max_ngram, 
+                additions, removed_indices, deleted, combinator=utilities.alpha_combination, k=0, alpha_gamma=0.5, min_ngram = 1,
                 symbols_to_remove=string.punctuation, extra_stopwords=[]):
     
     
+    # tokenize document into sentencs
+    sentences_a = nltk.sent_tokenize(documents[0]) 
     
     # tokenize document into sentencs
-    sentences = nltk.sent_tokenize(document) 
-    
-    
+    sentences_b = nltk.sent_tokenize(documents[-1]) 
+
     # Importance of sentences for current document
-    I_s = ranking[version]
+    I_sprev = ranking[0]
+    I_s = ranking[1]
     
 
     # computed intermediate Keywords for contrastive KE between the current and prev Document Version    
@@ -60,7 +62,7 @@ def final_score(document, version, changed_indices, new_indices, matched_dict, r
         # Combine the two scores using a combinator
         s_c = combinator(I_ci, I_si, alpha_gamma)
         # Compute the Dictonary of frequency for all ngrams up to "max_ngram" in matched sentence
-        current_freqs = utilities.build_sentence_freqs_max_ngram(sentences[matched_idx], 
+        current_freqs = utilities.build_sentence_freqs_max_ngram(sentences_b[matched_idx], 
                                                        higher_ngram=max_ngram, lower_ngram=min_ngram,
                                                        symbols_to_remove=symbols_to_remove,
                                                        extra_stopwords=extra_stopwords)
@@ -76,12 +78,25 @@ def final_score(document, version, changed_indices, new_indices, matched_dict, r
                 keywords[ngram] = keywords.get(ngram, 0) + float(freq * s_c)
             
 
+        old_freqs = utilities.build_sentence_freqs_max_ngram(sentences_a[i], 
+                                                        higher_ngram=max_ngram, lower_ngram=min_ngram,
+                                                        symbols_to_remove=symbols_to_remove,
+                                                        extra_stopwords=extra_stopwords)
+        
+        
+        # loop over all ngrams/freqs in the sentence
+        for ngram, freq in old_freqs.items():
+            
+            # check if word/ngram has been deleted from old(check the find_addition_deletions function for details)
+            if ngram in deleted[i]:
+                # include deleted ngrams, scored by their frequency * score of the change 
+                keywords[ngram] = keywords.get(ngram, 0) + float(freq * s_c)
                     
     # newly added sentence: ( new := has not been matched to)
     for i in new_indices:
         
         # Compute the Dictonary of frequency for all ngrams up to "max_ngram" in new sentence
-        current_freqs = utilities.build_sentence_freqs_max_ngram(sentences[i], 
+        current_freqs = utilities.build_sentence_freqs_max_ngram(sentences_b[i], 
                                                        higher_ngram=max_ngram, lower_ngram=min_ngram,
                                                        symbols_to_remove=symbols_to_remove,
                                                        extra_stopwords=extra_stopwords)
@@ -92,7 +107,22 @@ def final_score(document, version, changed_indices, new_indices, matched_dict, r
             # include added ngrams, scored by their frequency * Importance of the sentence
             keywords[ngram] = keywords.get(ngram, 0) + float(freq * I_s[i])
             
-   
+    
+    # newly added sentence: ( new := has not been matched to)
+    for i in removed_indices:
+        
+        # Compute the Dictonary of frequency for all ngrams up to "max_ngram" in new sentence
+        current_freqs = utilities.build_sentence_freqs_max_ngram(sentences_a[i], 
+                                                       higher_ngram=max_ngram, lower_ngram=min_ngram,
+                                                       symbols_to_remove=symbols_to_remove,
+                                                       extra_stopwords=extra_stopwords)
+        
+        
+        for ngram, freq in current_freqs.items():
+            
+            # include added ngrams, scored by their frequency * Importance of the sentence
+            keywords[ngram] = keywords.get(ngram, 0) + float(freq * I_sprev[i])
+
     # normalize keywords
     # total "IMPORTANCE COUNT
     total_count = sum(keywords.values())
@@ -134,6 +164,7 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
     new = {version: [] for version in range(versions-1)}
 
     removed = {version: [] for version in range(versions-1)}
+
     for i in range(versions-1):
         
         i_next = i + 1
@@ -164,8 +195,8 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
                                            version=i, w0 = w0, w1 = w1, w2=w2)
         
         # calculate keywords between two subsequent versions
-        intermediate_keywords = final_score(documents[i+1], i+1, changed_indices, new_indices, matched_dict, 
-                                            ranking, I_c, max_ngram, adds, combinator, 
+        intermediate_keywords = final_score(documents, changed_indices, new_indices, matched_dict, 
+                                            ranking, I_c, max_ngram, adds, rmv, delet, combinator, 
                                             alpha_gamma=alpha_gamma, min_ngram= min_ngram, 
                                             symbols_to_remove=symbols_to_remove,
                                             extra_stopwords=extra_stopwords)
