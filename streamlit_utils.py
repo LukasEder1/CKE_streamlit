@@ -85,10 +85,26 @@ def display_keywords(keywords, k):
     
     return df.head(k)
 
+def find_max_indices(matched_dict, matched_indices, changed_indices):
+    max_index = {i:int(matched_dict[i][0][0]) for i in changed_indices}
+    max_score = {i:int(matched_dict[i][0][1]) for i in changed_indices}
+    #splits = []
+    for i in changed_indices:
+        if len(matched_dict[i]) > 1:
+            for j, score in matched_dict[i]:
+                j = int(j)
+                
+                if score > max_score[i]:
+                    
+                    max_index[i] = int(j)
+                    max_score[i] = score    
+    
+    return max_index
 
-def highlight_changes(former, later, changed_indices, matched_dict, new, removed):
+def highlight_changes(former, later, changed_indices, matched_dict, new, removed, matched_indices):
 
     # Setup
+    max_index = find_max_indices(matched_dict, matched_indices, changed_indices)
 
     former_sentences = nltk.sent_tokenize(former.replace("$", "&#36;"))
 
@@ -96,6 +112,15 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 
     matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
     
+    splits = []
+
+    for i, l in matched_dict.items():
+        
+        if len(l) > 1:
+            for j, score in l:
+                if int(j) not in list(max_index.values()):
+                    splits.append(int(j))
+                    #split_from.update({str(j): max_index[i]})
 
     # Begin Document
 
@@ -120,6 +145,8 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
         for i in range(len(later_sentences)):
             if i in new:
                 annotated_text((later_sentences[i], "new", "#4dff4d"))
+            elif i in splits:
+                annotated_text((later_sentences[i], f"{str(i)} - split", "#f2f2f2"))
             elif i in matched_and_changed:
                 annotated_text((later_sentences[i], f"{i}", "#f2f2f2"))
             else:

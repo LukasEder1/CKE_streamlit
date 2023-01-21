@@ -115,6 +115,8 @@ with st.expander("Advanced Settings"):
     show_grams = st.checkbox('Show monograms in context (experimental feature)')
     show_importance = st.checkbox('Show Sentence Ranking (depends on the Importance Estimator)')
 
+    num_splits = st.number_input("Number of Splits allowed", 1, 4, 2)
+
 run = st.button('Compare Documents')
 
 if run:
@@ -123,7 +125,7 @@ if run:
 
     
     else:
-        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking, removed = contrastive_extraction([former, later], 
+        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking, removed,matched_indices = contrastive_extraction([former, later], 
                                                                             max_ngram=ngram,
                                                                             min_ngram=1, 
                                                                             show_changes=False, 
@@ -131,15 +133,17 @@ if run:
                                                                             importance_estimator=ies[ie],
                                                                             match_sentences=matchers[match],
                                                                             threshold=lower_bound,
-                                                                            extra_stopwords=[stopword.lower() for stopword in stopwords])
+                                                                            extra_stopwords=[stopword.lower() for stopword in stopwords],
+                                                                            top_k=num_splits)
+        #st.write(matched_dicts[0])
+
 
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
+        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
         
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))
 
-        
         #st.write(f"New sentences in the later version are marked as light blue in the following text. The indices of the new sentence are: {list_to_string(new[0])}.")
 
         kws = keywords[0]
@@ -166,4 +170,5 @@ if run:
                                 changed_sentences[0],
                                 matched_dicts[0],
                                 new[0],
-                                removed[0])
+                                removed[0],
+                                matched_indices)

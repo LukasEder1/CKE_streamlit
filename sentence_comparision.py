@@ -158,7 +158,7 @@ def match_sentences_tfidf_weighted(document_a, document_b, threshold = 0.6, *arg
 
 
 
-def match_sentences_semantic_search(document_a, document_b, threshold=0.6, k = 1, model='all-MiniLM-L6-v2'):
+def match_sentences_semantic_search(document_a, document_b, threshold=0.6, k = 3, model='all-MiniLM-L6-v2'):
     
     # Model to be used to create Embeddings which we will use for semantic search
     embedder = SentenceTransformer(model)
@@ -206,7 +206,6 @@ def match_sentences_semantic_search(document_a, document_b, threshold=0.6, k = 1
 
 def find_added_indices(matched_indices, corpus_length):
     corpus_indices = list(range(corpus_length))
-    
     return list(set(corpus_indices) - set(matched_indices))
 
 def detect_changes(matched_dict, document_a, document_b, important_indices, max_ngram,top_k=1, show_output=False,       
@@ -234,14 +233,12 @@ def detect_changes(matched_dict, document_a, document_b, important_indices, max_
         top_k = min(top_k, len(matched_dict[query_idx]))
         
         
-        
-        
         for k in range(top_k):
             
             
             # get current matched_sentence + score
             matched_idx, score = matched_dict[query_idx][k]
-            
+            # non-matches are indicated by 0
             if matched_idx >= 0:
                 matched_indices.append(int(matched_idx))
 
@@ -277,7 +274,7 @@ def detect_changes(matched_dict, document_a, document_b, important_indices, max_
     
     new_sentences = find_added_indices(matched_indices, len(corpus))
 
-    return changed_sentences, new_sentences, save_additions, save_deletions
+    return changed_sentences, new_sentences, save_additions, save_deletions, matched_indices
                     
             
                     
