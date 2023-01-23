@@ -139,7 +139,7 @@ if run:
         #st.write(matched_dicts[0])
         st.write(ud)
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
+        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))
 
