@@ -6,7 +6,7 @@ import nltk
 import utilities
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
-
+import re
 
 def opcodes(a, b):
     s = SequenceMatcher(None, a, b)
@@ -25,25 +25,57 @@ def syntactic_ratio(a, b):
     # rule-of-thumb: ratio > 0.6 -> similar
     return s.ratio()
 
+def freqs(list):
+    words = {}
+    for word in list:
+        words[word] = words.get(word, 0) + 1
+    return words
+
+"""
+# https://stackoverflow.com/questions/10074638/get-added-and-removed-words-between-two-strings
+def find_additions_deletions(a, b):
+    af = freqs(a.lower().split())
+    bf = freqs(b.lower().split())
+
+    removed = []
+    added = []
+
+    for key in af:
+        num = bf.get(key)
+        if num == None:
+            if af[key] > 1:
+                words = [key]*af[key]
+                removed.extend(words)
+            else:
+                removed.append(key)
+
+    for key in bf:
+        num = af.get(key)
+        if num == None:
+            added.append(key)
+        elif num > 1:
+            words = [key]*(num-1)
+            removed.extend(words)
+
+    return added, removed
+"""
+
 
 def find_additions_deletions(a, b):
-    """
-    returns a list of monogram additions in the string b
-    returns a list of monogram deletions from string a 
-    """
-    
+
     # init differ
     d = Differ()
     
     # compare the two 
-    diff = d.compare(a.split(), b.split())
+    a = re.findall(r"[\w']+", a.lower())
+    b = re.findall(r"[\w']+", b.lower())
+
+    diff = d.compare(a, b)
     changes = [change for change in diff if change.startswith('-') or change.startswith('+')]
     
     # output:
     additions = []
     deletions = []
-    
-    
     
     # add all monograms that indicate change
     for change in changes:
@@ -61,14 +93,20 @@ def find_additions_deletions(a, b):
     
     return additions, deletions
 
-def find_additions_deletions_ngrams(mono_additions, b, ngram):
+
+def find_additions_deletions_ngrams(mono_additions, mono_deletions, a, b, ngram):
     
+    # split earlier version into ngrams 
+    a_ngrams = list(nltk.ngrams(a.lower().split(), ngram))
+
     # split later version into ngrams
     b_ngrams = list(nltk.ngrams(b.lower().split(), ngram))
 
     # split monogram additions into ngram addtions if they appear next
     # to one onther in string b
     ngram_additions = list(nltk.ngrams(mono_additions, ngram))
+
+    ngram_deletions = list(nltk.ngrams(mono_deletions, ngram))
 
     # list of additions of current ngram length
     # i.e: for ngram=2 this list only contains bigrams
@@ -80,30 +118,42 @@ def find_additions_deletions_ngrams(mono_additions, b, ngram):
         if ngram_addition in b_ngrams:
             additions.append(" ".join(ngram_addition))
             
-    return additions
+    deletions = []
+    
+    for ngram_deletion in ngram_deletions:
+        
+        # check if the two additions appear next to each other in string b
+        if ngram_deletion in a_ngrams:
+            deletions.append(" ".join(ngram_deletion))
+
+    return additions, deletions
 
 def find_additions_deletions_max_ngram(a, b, max_ngram, symbols_to_remove):
     
-    a = utilities.remove_punctuation(a, symbols_to_remove)
-    b = utilities.remove_punctuation(b, symbols_to_remove)
+    a = utilities.remove_punctuation(a[:-1], [","])
+    b = utilities.remove_punctuation(b[:-1], [","])
     
     # extract all single word additions
-    mono_additions, deletions = find_additions_deletions(a, b)
+    mono_additions, mono_deletions = find_additions_deletions(a, b)
     
     # total list of additions
     # i.e.: for max_ngram = 3, this list contains
     # mono-, bi- and trigrams
     additions = mono_additions.copy()
-    
-    for i in range(2, max_ngram+1):
+    deletions = mono_deletions.copy()
+
+    for ngram_size in range(2, max_ngram+1):
         
-        # find i-gram additions
-        current_additions = find_additions_deletions_ngrams(mono_additions, b, i)
-        
-        # expand total additions list
+        # find (ngram_size)-gram additions and deletions
+        current_additions, current_deletions = find_additions_deletions_ngrams(mono_additions,
+                                                                            mono_deletions,
+                                                                            a,
+                                                                            b,
+                                                                            ngram_size)
+
         additions += current_additions
-        
-    # TODO: deletions are still only for single words
+        deletions += current_deletions
+    
     
     return additions, deletions
 
@@ -208,6 +258,28 @@ def find_added_indices(matched_indices, corpus_length):
     corpus_indices = list(range(corpus_length))
     return list(set(corpus_indices) - set(matched_indices))
 
+"""
+    for i in changed_content:
+        matches = list(changed_content[i].keys())
+        for j in matches:
+            for k in matches:
+                if k != j:
+                    for l in range(len(changed_content[i][j])):
+                        element = changed_content[i][j][l]
+                        if bool(element not in changed_content[i][k]):                            
+"""
+
+def unified_diffs(siblings):
+    first = siblings[0]
+    unified_content = []
+    for i in range(len(first)):
+        word = first[i]
+        print(word, [word in sibling for sibling in siblings[1:]])
+        if all([word in sibling for sibling in siblings[1:]]):
+            unified_content.append(word)
+    
+    return unified_content
+
 def detect_changes(matched_dict, document_a, document_b, important_indices, max_ngram,top_k=1, show_output=False,       
                    symbols_to_remove=[","]):
         
@@ -220,24 +292,24 @@ def detect_changes(matched_dict, document_a, document_b, important_indices, max_
     
     matched_indices = []
     
-    save_additions = {}
+    # can map to multiple, since spltis are possible
+    save_additions = {i:{} for i in list(matched_dict.keys())}
     
-    save_deletions = {}
-    
+    save_deletions = {i:{} for i in list(matched_dict.keys())}
+
     for query_idx in range(len(queries)):
-        
         # current query
         query = queries[query_idx]
         
         # give lower bound on number of matched sentences
-        top_k = min(top_k, len(matched_dict[query_idx]))
+        bounded_k = min(top_k, len(matched_dict[query_idx]))
         
-        
-        for k in range(top_k):
+        for k in range(bounded_k):
             
             
             # get current matched_sentence + score
             matched_idx, score = matched_dict[query_idx][k]
+
             # non-matches are indicated by 0
             if matched_idx >= 0:
                 matched_indices.append(int(matched_idx))
@@ -265,16 +337,21 @@ def detect_changes(matched_dict, document_a, document_b, important_indices, max_
                 if ratio < 1.0:
                     changed_sentences.append(query_idx)
 
-                    save_additions[query_idx] = additions
+                    save_additions[query_idx][int(matched_idx)] = additions
 
-                    save_deletions[query_idx] = deletions
+                    save_deletions[query_idx][int(matched_idx)] =  deletions
                 
     #drop_unimportant_indices(changed_sentences, important_indices=important_indices[version])
-    
-    
-    new_sentences = find_added_indices(matched_indices, len(corpus))
 
-    return changed_sentences, new_sentences, save_additions, save_deletions, matched_indices
+    new_sentences = find_added_indices(matched_indices, len(corpus))
+    unified_delitions = {i: [] for i in changed_sentences}
+    
+    for changed_idx in changed_sentences:
+
+        matches = list(save_deletions[changed_idx].values())
+        unified_delitions[changed_idx] = unified_diffs(matches)
+
+    return changed_sentences, new_sentences, save_additions, save_deletions, matched_indices, unified_delitions
                     
             
                     
@@ -296,29 +373,29 @@ def calculate_change_importance(changed_idx, matched_dict, ranking,
         Importance of 1 change.
     """
     
+    I_s = ranking[version][changed_idx]
     
-    for k in range(top_k):
+    for k in range(len(matched_dict[changed_idx])):
         matched_idx, score = matched_dict[changed_idx][k]
-
-
-        I_s = ranking[version][changed_idx]
 
         next_I_s = ranking[version + 1][int(matched_idx)]
 
         if score < threshold:
             # Hypothesis 2
+            print("A")
             I_c = next_I_s * (w2/ w1 * score)
         else:    
             # Hypothesis 1
+            print("B")
             I_c = I_s * (w0/ w1 * score)
     
     return I_c
 
 
 def calculate_change_importances(changed_indices, matched_dict,
-                                 ranking, threshold, version, w0=1, w1=1, w2=1):
+                                 ranking, threshold, version, w0=1, w1=1, w2=1, k=1):
     
-    return {changed_index: calculate_change_importance(changed_index, matched_dict,ranking,threshold, version, w0, w1, w2) 
+    return {changed_index: calculate_change_importance(changed_index, matched_dict,ranking,threshold, version, w0, w1, w2, top_k=k) 
             for changed_index in changed_indices}
 
 

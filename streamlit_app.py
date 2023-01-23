@@ -11,13 +11,14 @@ import re
 import pickle
 from annotated_text import annotated_text
 from streamlit_utils import *
+import difflib
 
 with open("docs.pkl", "rb") as file:
     # read list from file
     docs = pickle.load(file)
 
 # custom examples <- refactor
-docs[0] = ["In this paper, we introduce TextRank – a graph-based ranking model for text processing, and show how this model can be successfully used in natural language applications. In particular, we propose two innovative unsupervised methods for keyword and sentence extraction, and show that the results obtained compare favorably with previously published results on established benchmark.", "TextRank, a graph-based ranking system, is introduced in this paper. Ranking model for text processing, and demonstrate how this model can be used successfully in natural language processing applications. We propose two novel unsupervised methods for keyword and sentence extraction in particular, and demonstrate that the results obtained compare favorably with previously published results on established benchmarks."]
+docs[0] = ["In this paper, we introduce TextRank - a graph-based ranking model for text processing, and show how this model can be successfully used in natural language applications. In particular, we propose two innovative unsupervised methods for keyword and sentence extraction, and show that the results obtained compare favorably with previously published results on established benchmark.", "TextRank, a graph-based ranking system, is introduced in this paper. Ranking model for text processing, and demonstrate how this model can be used successfully in natural language processing applications. We propose two novel unsupervised methods for keyword and sentence extraction in particular, and demonstrate that the results obtained compare favorably with previously published results on established benchmarks."]
 docs[1] = ["""The dominant sequence transduction models are based on complex recurrent or
 convolutional neural networks that include an encoder and a decoder. The best
 performing models also connect the encoder and decoder through an attention
@@ -125,7 +126,7 @@ if run:
 
     
     else:
-        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking, removed,matched_indices = contrastive_extraction([former, later], 
+        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking, removed,matched_indices, ud = contrastive_extraction([former, later], 
                                                                             max_ngram=ngram,
                                                                             min_ngram=1, 
                                                                             show_changes=False, 
@@ -134,13 +135,11 @@ if run:
                                                                             match_sentences=matchers[match],
                                                                             threshold=lower_bound,
                                                                             extra_stopwords=[stopword.lower() for stopword in stopwords],
-                                                                            top_k=num_splits)
+                                                                            top_k=int(num_splits))
         #st.write(matched_dicts[0])
-
-
+        st.write(ud)
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
         st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]))
-        
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))
 

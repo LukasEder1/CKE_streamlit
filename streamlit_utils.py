@@ -6,17 +6,8 @@ import re
 import pickle
 from annotated_text import annotated_text
 
-def get_matched_indices(additions, matched_dict):
-    indices = []
-    scores = []
-    for addition in additions.keys():
-        mathed_idx, score = matched_dict[addition][0]
-        
-        indices.append(int(mathed_idx))
-        
-        scores.append(float(score))
-    
-    return indices, scores
+def get_matched_indices(matched_dict):
+    return [i for i in list(matched_dict.keys()) if len(matched_dict[i]) > 0]
 
 def is_empty(document):
     return len(document) == 0 or document.isspace()
@@ -51,7 +42,7 @@ def annotate_keywords(document, intermediate_keywords, changed_indices, matched_
             if type(word) != str:
                 break
 
-            if word.lower() in added[i] and word.lower() in keywords:
+            if word.lower() in added[i][int(matched_idx)] and word.lower() in keywords:
                 words[matched_idx][j] = (f"{word}", f"{round(intermediate_keywords[word.lower()], 5)}")
 
             else:
@@ -66,12 +57,27 @@ def annotate_keywords(document, intermediate_keywords, changed_indices, matched_
             st.write(sentences[i])
 
 def changed_df(added, matched_dict, deleted):
-    matched_indices, scores = get_matched_indices(added, matched_dict)
-    return pd.DataFrame({"original sentence position": added.keys(), 
+    original_indices = []
+    matched_indices = []
+    matched_score = []
+    added_list = []
+    deleted_list = []
+    #print(get_matched_indices(matched_dict))
+    for i in get_matched_indices(matched_dict):
+        original_indices += len(matched_dict[i]) * [i]
+        for idx, score in  matched_dict[i]:
+            matched_indices.append(int(idx))
+            matched_score.append(float(score))
+            added_list.append(added[i][int(idx)])
+            deleted_list.append(deleted[i][int(idx)])
+
+    #matched_indices, scores = get_matched_indices(added, matched_dict)
+    
+    return pd.DataFrame({"original sentence position": original_indices, 
         "matched sentence position": matched_indices,
-        "semantic similarity":scores,
-        "added": added.values(),
-        "deleted": deleted.values() }).reset_index(drop=True)
+        "semantic similarity":matched_score,
+        "added": added_list,
+        "deleted": deleted_list }).reset_index(drop=True)
 
 
 def create_ranking_df(rank):
