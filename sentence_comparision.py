@@ -60,7 +60,7 @@ def find_additions_deletions(a, b):
     return added, removed
 """
 
-
+""""""
 def find_additions_deletions(a, b):
 
     # init differ
@@ -274,7 +274,6 @@ def unified_diffs(siblings):
     unified_content = []
     for i in range(len(first)):
         word = first[i]
-        print(word, [word in sibling for sibling in siblings[1:]])
         if all([word in sibling for sibling in siblings[1:]]):
             unified_content.append(word)
     

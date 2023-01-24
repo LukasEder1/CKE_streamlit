@@ -27,26 +27,24 @@ def create_inter_frame(inter_keywords):
 def annotate_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
     sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
     words = [nltk.word_tokenize(sentences[i])  for i in range(len(sentences))]
-    matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
+    matched_and_changed = [matched_dict[i][k][0] for i in changed_indices for k in range(len(matched_dict[i]))]
     
     for i in changed_indices:
+        for k in range(len(matched_dict[i])):
+            matched_idx, _ = matched_dict[i][k]
+            sentence = sentences[int(matched_idx)]
+            keywords = list(intermediate_keywords.keys())
+            for j in range(len(words[matched_idx])):
+                word = words[matched_idx][j]
 
-        matched_idx, _ = matched_dict[i][0]
+                if type(word) != str:
+                    break
 
-        sentence = sentences[int(matched_idx)]
-        keywords = list(intermediate_keywords.keys())
+                if word.lower() in added[i].get(int(matched_idx), []) and word.lower() in keywords:
+                    words[matched_idx][j] = (f"{word}", f"{round(intermediate_keywords[word.lower()], 5)}")
 
-        for j in range(len(words[matched_idx])):
-            word = words[matched_idx][j]
-
-            if type(word) != str:
-                break
-
-            if word.lower() in added[i][int(matched_idx)] and word.lower() in keywords:
-                words[matched_idx][j] = (f"{word}", f"{round(intermediate_keywords[word.lower()], 5)}")
-
-            else:
-                words[matched_idx][j] += " "
+                else:
+                    words[matched_idx][j] += " "
 
     for i in range(len(words)):
         if i in matched_and_changed:
@@ -62,14 +60,15 @@ def changed_df(added, matched_dict, deleted):
     matched_score = []
     added_list = []
     deleted_list = []
-    #print(get_matched_indices(matched_dict))
+
     for i in get_matched_indices(matched_dict):
         original_indices += len(matched_dict[i]) * [i]
         for idx, score in  matched_dict[i]:
             matched_indices.append(int(idx))
             matched_score.append(float(score))
-            added_list.append(added[i][int(idx)])
-            deleted_list.append(deleted[i][int(idx)])
+            
+            added_list.append(added[i].get(int(idx), []))
+            deleted_list.append(deleted[i].get(int(idx), []))
 
     #matched_indices, scores = get_matched_indices(added, matched_dict)
     

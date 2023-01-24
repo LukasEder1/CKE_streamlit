@@ -74,7 +74,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             for ngram, freq in current_freqs.items():
                 
                 # check if word/ngram has been newly added (check the find_addition_deletions function for details)
-                if ngram in additions[i][int(matched_idx)]:
+                if ngram in additions[i].get(int(matched_idx), []):
                     # include added ngrams, scored by their frequency * score of the change 
                     keywords[ngram] = keywords.get(ngram, 0) + float(freq * s_c)
                 
