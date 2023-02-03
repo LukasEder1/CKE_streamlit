@@ -7,6 +7,9 @@ import utilities
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import re
+import pysbd
+
+
 
 def opcodes(a, b):
     s = SequenceMatcher(None, a, b)
@@ -58,18 +61,19 @@ def find_additions_deletions(a, b):
             removed.extend(words)
 
     return added, removed
-"""
 
-""""""
+
+"""
 def find_additions_deletions(a, b):
 
     # init differ
     d = Differ()
     
-    # compare the two 
+    # tokenize, using REGEX
     a = re.findall(r"[\w']+", a.lower())
     b = re.findall(r"[\w']+", b.lower())
 
+    # compare the two 
     diff = d.compare(a, b)
     changes = [change for change in diff if change.startswith('-') or change.startswith('+')]
     
@@ -95,6 +99,7 @@ def find_additions_deletions(a, b):
 
 
 def find_additions_deletions_ngrams(mono_additions, mono_deletions, a, b, ngram):
+    
     
     # split earlier version into ngrams 
     a_ngrams = list(nltk.ngrams(a.lower().split(), ngram))
@@ -160,11 +165,13 @@ def find_additions_deletions_max_ngram(a, b, max_ngram, symbols_to_remove):
 
 def match_sentences_tfidf_weighted(document_a, document_b, threshold = 0.6, *args):
     
+    seg = pysbd.Segmenter(language="en", clean=False)
+
     # Use the sentences in A as queries
-    queries = nltk.sent_tokenize(document_a)
+    queries = seg.segment(document_a)
     
     # Use the sentences in B as our corpus
-    corpus = nltk.sent_tokenize(document_b)
+    corpus = seg.segment(document_b)
     
     deleted_sentences = []
     # matched_sentences dict:
@@ -214,11 +221,14 @@ def match_sentences_semantic_search(document_a, document_b, threshold=0.6, k = 3
     embedder = SentenceTransformer(model)
     
     # Use the sentences in A as queries
-    queries = nltk.sent_tokenize(document_a)
     
+    seg = pysbd.Segmenter(language="en", clean=False)
+
+    queries = seg.segment(document_a)
+
     # Use the sentences in B as our corpus
-    corpus = nltk.sent_tokenize(document_b)
-    
+    corpus = seg.segment(document_b)
+
     # Create embeddings using B
     corpus_embeddings = embedder.encode(corpus, convert_to_tensor=True)
 
@@ -281,13 +291,14 @@ def unified_diffs(siblings):
 
 def detect_changes(matched_dict, document_a, document_b, important_indices, max_ngram,top_k=1, show_output=False,       
                    symbols_to_remove=[","]):
-        
+    
+    seg = pysbd.Segmenter(language="en", clean=False)
     # Use the sentences in A as queries
-    queries = nltk.sent_tokenize(document_a)
+    queries = seg.segment(document_a)
     
     changed_sentences = []
     
-    corpus = nltk.sent_tokenize(document_b)
+    corpus = seg.segment(document_b)
     
     matched_indices = []
     
