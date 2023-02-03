@@ -37,7 +37,7 @@ nltk.download('stopwords')
 article_id = st.selectbox(
     'Choose a Document or try it with your own one.',
     ("Custom", "Example 0", "Example 1", "Article 16159", "Article 17313", 
-    "Article 17748","Policy 99880" ,"Policy 90232", "Policy 98447",
+    "Article 17748","Policy 99880", "Policy 90232", "Policy 98447",
      "Policy 106601", "Policy 106604"))
 
 
