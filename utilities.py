@@ -1,5 +1,8 @@
 import string
 import nltk
+import pysbd
+from collections import Counter
+import re
 
 def remove_punctuation(text, symbols=string.punctuation):
     return "".join([char for char in text if char not in symbols])
@@ -48,7 +51,7 @@ def build_sentence_freqs_max_ngram(sentence, higher_ngram, lower_ngram = 1, symb
     return freqs
 
 
-def build_doc_level_freqs(documents):
+def build_doc_level_freqs(documents, maxngram):
     """
     in: documents
     
@@ -60,22 +63,56 @@ def build_doc_level_freqs(documents):
     document_frequencies = {version:{} for version in range(number_of_documents)}
     
     current_version = 0
-    
+    seg = pysbd.Segmenter(language="en", clean=False)
     for document in documents:
-        sentences = nltk.sent_tokenize(document.lower())
+        sentences = seg.segment(document.lower())
         freqs = {}
         
         stop_words = nltk.corpus.stopwords.words("english")
         
         for sentence in sentences:
-            for word in nltk.word_tokenize(sentence):
-                if word not in stop_words and len(word) > 0:
-                    freqs[word] = freqs.get(word, 0) + 1 
+            words = re.findall(r"[\w']+", sentence)
+            for n in range(1, maxngram+1):
+                for ngram in nltk.ngrams(words, n):
+                    phrase = " ".join(ngram)
+                    if phrase not in stop_words and len(phrase) > 0:
+                        freqs[phrase] = freqs.get(phrase, 0) + 1 
         
         document_frequencies[current_version] = freqs
         current_version += 1
         
     return document_frequencies
+
+def build_diff_level_freqs(diff_content, symbols_to_remove):
+    """
+    in: documents
+    
+    out: dictonary of dictonaries of word frequencies for diff content
+    """
+    diff_content = [remove_punctuation(word.lower(), [","]) for word in diff_content]
+
+    stop_words = nltk.corpus.stopwords.words("english")
+
+    diff_content = [word for word in diff_content if len(word) > 0 and word not in stop_words]
+        
+    return Counter(diff_content) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def build_sentence_level_freqs(document):
@@ -85,7 +122,7 @@ def build_sentence_level_freqs(document):
     out: dictonary of dictonaries of word frequencies without stopwords
     """
     
-    sentences = nltk.sent_tokenize(document)
+    sentences = seg.segment(document)
       
     sentences = [sentence.lower() for sentence in sentences]
     
@@ -143,7 +180,7 @@ def drop_unimportant_indices(indices, important_indices):
 
 def get_sentences(indices, version):
     # get all sentences from version v present in list "indices"
-    sentences = nltk.sent_tokenize(documents[version])
+    sentences = seg.segment(documents[version])
     return [sentences[index] for index in indices]
 
 
