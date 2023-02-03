@@ -11,7 +11,7 @@ import re
 from yake.highlight import TextHighlighter
 import keyword_extraction
 import math
-
+import pysbd
 import numpy
 
 import nltk
@@ -28,6 +28,7 @@ class TextRankSummarizer(AbstractSummarizer):
     # small number to prevent zero-division error, see https://github.com/miso-belica/sumy/issues/112
     _ZERO_DIVISION_PREVENTION = 1e-7
     _stop_words = frozenset()
+    seg = pysbd.Segmenter(language="en", clean=False)
 
     @property
     def stop_words(self):
@@ -42,19 +43,18 @@ class TextRankSummarizer(AbstractSummarizer):
 
         ratings = self.rate_sentences(document)
         
-        sentences = nltk.sent_tokenize(document)
+        sentences = self.seg.segment(document)
         
         return self._get_best_sentences(sentences, sentences_count, ratings)
 
 
     def rate_sentences(self, document):
         
-        sentences = nltk.sent_tokenize(document)
+        sentences = self.seg.segment(document)
         
         matrix = self._create_matrix(document)
         
         ranks = self.power_method(matrix, self.epsilon)
-        
         
         # key -> sentence position, value: TextRank score
         ranking = {idx: rank for idx, rank in enumerate(ranks)}
@@ -74,7 +74,7 @@ class TextRankSummarizer(AbstractSummarizer):
         TextRank's paper. The resulting matrix is a stochastic matrix ready for power method.
         """
         
-        sentences = nltk.sent_tokenize(document)
+        sentences = self.seg.segment(document)
         
         sentences_as_words = [self._to_words_set(sent) for sent in sentences] # -> USE NLTK isntead -> easy fix
        
@@ -144,9 +144,9 @@ def text_rank_importance(documents):
 
 
 def find_important_indices(important_sentences, document):
-    
+    seg = pysbd.Segmenter(language="en", clean=False)
     # split into sentences
-    sentences = nltk.sent_tokenize(document)
+    sentences = seg.segment(document)
     
     # list of indices corresponding to the important sentences 
     important_indices = []
@@ -168,7 +168,8 @@ def text_rank(documents):
     number_of_documents = len(documents)
     important_sentences = {version:[] for version in range(number_of_documents)}
     important_indices = {version:[] for version in range(number_of_documents)}
-    
+    seg = pysbd.Segmenter(language="en", clean=False)
+
     for current in range(number_of_documents):
         
         # current document
@@ -178,7 +179,7 @@ def text_rank(documents):
         summary = summarizer.summarize(document).strip()
         
         # tokenize into seprate sentences
-        important_sentences[current] = nltk.sent_tokenize(summary)
+        important_sentences[current] = seg.segment(summary)
             
         # find corresponding indices in original corpus
         important_indices[current] = find_important_indices(important_sentences[current], document)
@@ -191,14 +192,14 @@ def lex_rank(documents, n=10, model='all-MiniLM-L6-v2'):
 
     # Our input document we want to summarize
     # As example, we take the first section from Wikipedia
-    
+    seg = pysbd.Segmenter(language="en", clean=False)
     number_of_documents = len(documents)
     important_sentences = {version:[] for version in range(number_of_documents)}
     important_indices = {version:[] for version in range(number_of_documents)}
     
     for current in range(number_of_documents):
     #Split the document into sentences
-        sentences = nltk.sent_tokenize(documents[current])
+        sentences = seg.segment(documents[current])
 
         #Compute the sentence embeddings
         embeddings = model.encode(sentences, convert_to_tensor=True)
@@ -229,7 +230,7 @@ def lex_rank(documents, n=10, model='all-MiniLM-L6-v2'):
 def yake_keyword_frequency(documents, ngram_size=3):
     
     number_of_documents = len(documents)
-    
+    seg = pysbd.Segmenter(language="en", clean=False)
     # dictonary of form: version -> keywords
     keywords = keyword_extraction.extract_yake(documents)
     
@@ -242,7 +243,7 @@ def yake_keyword_frequency(documents, ngram_size=3):
     for current in range(number_of_documents):
         
         # current number of sentences
-        number_of_sentences = len(nltk.sent_tokenize(documents[current]))
+        number_of_sentences = len(seg.segment(documents[current]))
         
         # dictonary to count number of keywords in a sentence
         keyword_count = {sentence:0 for sentence in range(number_of_sentences)}
@@ -251,7 +252,7 @@ def yake_keyword_frequency(documents, ngram_size=3):
         highlightet_text = highlighter.highlight(documents[current], keywords[current])
         
         # split document into sentences
-        highlightet_sentences = nltk.sent_tokenize(highlightet_text)
+        highlightet_sentences = seg.segment(highlightet_text)
         
         # used to determine the current position in the corpus
         sentence_position = 0
@@ -273,7 +274,8 @@ def yake_keyword_frequency(documents, ngram_size=3):
 def yake_weighted_keyword_frequency(documents, ngram_size=3):
     
     number_of_documents = len(documents)
-    
+    seg = pysbd.Segmenter(language="en", clean=False)
+
     # dictonary of form: version -> keywords
     keywords = keyword_extraction.extract_yake(documents)
     
@@ -286,7 +288,7 @@ def yake_weighted_keyword_frequency(documents, ngram_size=3):
     for current in range(number_of_documents):
         
         # current number of sentences
-        number_of_sentences = len(nltk.sent_tokenize(documents[current]))
+        number_of_sentences = len(seg.segment(documents[current]))
         
         # dictonary to count number of keywords in a sentence
         keyword_count = {sentence:0 for sentence in range(number_of_sentences)}
@@ -295,7 +297,7 @@ def yake_weighted_keyword_frequency(documents, ngram_size=3):
         highlightet_text = highlighter.highlight(documents[current], keywords[current])
         
         # split document into sentences
-        highlightet_sentences = nltk.sent_tokenize(highlightet_text)
+        highlightet_sentences = seg.segment(highlightet_text)
         
         # used to determine the current position in the corpus
         sentence_position = 0
@@ -326,14 +328,14 @@ def rank_yake(documents, keyword_counts, top_n=5):
     important_sentences = {version:[] for version in range(number_of_documents)}
     important_indices = {version:[] for version in range(number_of_documents)}
     ranking = {version:{} for version in range(number_of_documents)}
-    
+    seg = pysbd.Segmenter(language="en", clean=False)
     # document index
     current = 0
     eps = 0.001
     
     for counts in keyword_counts:
             
-        sentences  = nltk.sent_tokenize(documents[current])
+        sentences  = seg.segment(documents[current])
         
         # get the length of each sentence
         sentence_lengths = [len(sentence) for sentence in sentences]
@@ -386,3 +388,33 @@ def ls(important, to_rank):
         if important[idx] == to_rank:
             index += idx
     return index
+
+
+def contrastive_importance(former, later):
+
+    # Concat the two document versions
+    combined = text_rank_importance([former + " " + later])[0]
+    print(len(combined))
+    # reverse the values
+    combined = {k: 1/v for k, v in combined.items()}
+
+    total = sum(combined.values())
+    
+    # normalize and sort
+    combined = {k: float(v/total) for k, v in sorted(combined.items(), key=lambda item: item[1], 
+                                                 reverse=True)}
+
+    # Sentence Boundary Detector (Improved Sentence Tokenization)
+    # possible alternative would be nltk.sent_tokenize                                    
+    seg = pysbd.Segmenter(language="en", clean=False)
+
+    # calculate number of sentences in the earlier sentence
+    former_length = len(seg.segment(former))
+
+    # dictonaries for the respective documents
+    ci_former = {k: v for k, v in combined.items() if int(k) < former_length}
+
+    ci_later = {k-former_length+1: v for k, v in combined.items() if int(k) >= former_length}
+
+
+    return ci_former, ci_later
