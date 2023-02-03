@@ -5,6 +5,7 @@ import numpy as np
 import re
 import pickle
 from annotated_text import annotated_text
+import pysbd
 
 def get_matched_indices(matched_dict):
     return [i for i in list(matched_dict.keys()) if len(matched_dict[i]) > 0]
@@ -25,7 +26,8 @@ def create_inter_frame(inter_keywords):
     return kws, scores
 
 def annotate_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
-    sentences = nltk.sent_tokenize(document.replace("$", "&#36;"))
+    seg = pysbd.Segmenter(language="en", clean=False)
+    sentences = seg.segment(document.replace("$", "&#36;"))
     words = [nltk.word_tokenize(sentences[i])  for i in range(len(sentences))]
     matched_and_changed = [matched_dict[i][k][0] for i in changed_indices for k in range(len(matched_dict[i]))]
     
@@ -110,10 +112,10 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 
     # Setup
     max_index = find_max_indices(matched_dict, matched_indices, changed_indices)
+    seg = pysbd.Segmenter(language="en", clean=False)
+    former_sentences = seg.segment(former.replace("$", "&#36;"))
 
-    former_sentences = nltk.sent_tokenize(former.replace("$", "&#36;"))
-
-    later_sentences = nltk.sent_tokenize(later.replace("$", "&#36;"))
+    later_sentences = seg.segment(later.replace("$", "&#36;"))
 
     matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
     
@@ -161,10 +163,10 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 def show_sentence_importances(ranking, former, later):
 
     st.markdown("<h1 style='text-align: center;'>Sentence Importance Calculation</h1>", unsafe_allow_html=True)
+    seg = pysbd.Segmenter(language="en", clean=False)
+    former_sentences = seg.segment(former.replace("$", "&#36;"))
 
-    former_sentences = nltk.sent_tokenize(former.replace("$", "&#36;"))
-
-    later_sentences = nltk.sent_tokenize(later.replace("$", "&#36;"))
+    later_sentences = seg.segment(later.replace("$", "&#36;"))
 
     rcol1, rcol2 = st.columns(2)
     ranking_earlier = create_ranking_df(ranking[0])
