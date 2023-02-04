@@ -93,7 +93,7 @@ with st.expander("Advanced Settings"):
 
     # Include extra stopwords
     stopwords = st.multiselect("Remove additional stopwords",
-                            list(set(nltk.word_tokenize(later))),
+                            list(set(nltk.word_tokenize(later)).union(set(nltk.word_tokenize(former)))),
                             [])
 
     # Display Ngrams
