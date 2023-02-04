@@ -145,7 +145,8 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
     # Using Myers algorithm
     changed_indices, new_indices, additions, deletions, matched_indices, unified_delitions = detect_changes(matched_dict, documents[0], documents[-1], 
                                         important_indices=[], max_ngram=max_ngram, show_output=show_changes,
-                                        symbols_to_remove=symbols_to_remove, top_k=top_k)
+                                        symbols_to_remove=symbols_to_remove, top_k=top_k,
+                                        extra_stopwords=extra_stopwords)
     
     
 

@@ -64,7 +64,7 @@ def find_additions_deletions(a, b):
 
 
 """
-def find_additions_deletions(a, b):
+def find_additions_deletions(a, b, extra_stopwords=[]):
 
     # init differ
     d = Differ()
@@ -81,18 +81,21 @@ def find_additions_deletions(a, b):
     additions = []
     deletions = []
     
+    # only consider non-stop words worth including into diff content
+    stop_words = nltk.corpus.stopwords.words("english") + extra_stopwords
+
     # add all monograms that indicate change
     for change in changes:
         type_of_change  = 'addition' if change[0] == '+' else 'deletion'
         
         # remove unwanted symbols
         actual_change = change[2:]
-        
-        if type_of_change == 'addition':
-            additions.append(actual_change.lower())
-            
-        else:
-            deletions.append(actual_change)
+        if actual_change not in stop_words: # <-
+            if type_of_change == 'addition':
+                additions.append(actual_change.lower())
+                
+            else:
+                deletions.append(actual_change)
     
     
     return additions, deletions
@@ -133,13 +136,13 @@ def find_additions_deletions_ngrams(mono_additions, mono_deletions, a, b, ngram)
 
     return additions, deletions
 
-def find_additions_deletions_max_ngram(a, b, max_ngram, symbols_to_remove):
+def find_additions_deletions_max_ngram(a, b, max_ngram, symbols_to_remove, extra_stopwords=[]):
     
     a = utilities.remove_punctuation(a[:-1], [","])
     b = utilities.remove_punctuation(b[:-1], [","])
     
     # extract all single word additions
-    mono_additions, mono_deletions = find_additions_deletions(a, b)
+    mono_additions, mono_deletions = find_additions_deletions(a, b, extra_stopwords=extra_stopwords)
     
     # total list of additions
     # i.e.: for max_ngram = 3, this list contains
@@ -268,29 +271,26 @@ def find_added_indices(matched_indices, corpus_length):
     corpus_indices = list(range(corpus_length))
     return list(set(corpus_indices) - set(matched_indices))
 
-"""
-    for i in changed_content:
-        matches = list(changed_content[i].keys())
-        for j in matches:
-            for k in matches:
-                if k != j:
-                    for l in range(len(changed_content[i][j])):
-                        element = changed_content[i][j][l]
-                        if bool(element not in changed_content[i][k]):                            
-"""
 
 def unified_diffs(siblings):
+    """
+    siblings := sentences that have been matched to from the same source sentence
+    
+    """
     first = siblings[0]
+
     unified_content = []
     for i in range(len(first)):
         word = first[i]
+
+        # only take words in the unified diff that are present in all split diffs
         if all([word in sibling for sibling in siblings[1:]]):
             unified_content.append(word)
     
     return unified_content
 
 def detect_changes(matched_dict, document_a, document_b, important_indices, max_ngram,top_k=1, show_output=False,       
-                   symbols_to_remove=[","]):
+                   symbols_to_remove=[","], extra_stopwords=[]):
     
     seg = pysbd.Segmenter(language="en", clean=False)
     # Use the sentences in A as queries
@@ -328,7 +328,7 @@ def detect_changes(matched_dict, document_a, document_b, important_indices, max_
                 matched_sentence = corpus[int(matched_idx)]
 
 
-                additions, deletions = find_additions_deletions_max_ngram(query, matched_sentence, max_ngram, symbols_to_remove)
+                additions, deletions = find_additions_deletions_max_ngram(query, matched_sentence, max_ngram, symbols_to_remove, extra_stopwords)
 
                 # get syntactic ratio
                 ratio = syntactic_ratio(query, matched_sentence)
@@ -359,6 +359,7 @@ def detect_changes(matched_dict, document_a, document_b, important_indices, max_
     for changed_idx in changed_sentences:
 
         matches = list(save_deletions[changed_idx].values())
+
         unified_delitions[changed_idx] = unified_diffs(matches)
 
     return changed_sentences, new_sentences, save_additions, save_deletions, matched_indices, unified_delitions
