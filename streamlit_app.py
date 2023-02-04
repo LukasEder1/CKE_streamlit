@@ -1,4 +1,4 @@
-from contrastive_keyword_extraction import contrastive_extraction, final_score, combine_keywords
+from contrastive_keyword_extraction import contrastive_extraction 
 import sqlite3
 import pandas as pd
 import string
@@ -115,7 +115,8 @@ if run:
 
     
     else:
-        keywords, matched_dicts, changed_sentences, added, deleted, new, ranking, removed,matched_indices, ud = contrastive_extraction([former, later], 
+        
+        keywords, matched_dict, changed_sentences, added, deleted, new, ranking, removed,matched_indices, ud = contrastive_extraction([former, later], 
                                                                             max_ngram=ngram,
                                                                             min_ngram=1, 
                                                                             show_changes=False, 
@@ -126,30 +127,31 @@ if run:
                                                                             extra_stopwords=[stopword.lower() for stopword in stopwords],
                                                                             top_k=int(num_splits))
 
+        st.write(ud)
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added[0], matched_dicts[0], deleted[0]), use_container_width=True)
+        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))
-        kws = keywords[0]
+        kws = keywords
 
         # Highlight Contrastive Keywords in Context        
         if show_grams:
             st.markdown("<h1 style='text-align: center;'>Keywords in Context</h1>", unsafe_allow_html=True)
             annotate_keywords(later, 
                             {k: kws[k] for k in list(kws)[:top_k]},
-                            changed_sentences[0],
-                            matched_dicts[0],
-                            new[0],
-                            added=added[0], 
+                            changed_sentences,
+                            matched_dict,
+                            new,
+                            added=added, 
                             ngram=1)
 
         # Highlight matched/deleted/added and split sentences
         highlight_changes(former,
                                 later,
-                                changed_sentences[0],
-                                matched_dicts[0],
-                                new[0],
-                                removed[0],
+                                changed_sentences,
+                                matched_dict,
+                                new,
+                                removed,
                                 matched_indices)
 
         # Show and Compare the most Important Sentences

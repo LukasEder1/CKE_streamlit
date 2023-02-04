@@ -3,46 +3,27 @@ import nltk
 import utilities
 from tqdm import trange
 import sentence_importance
-from sentence_comparision import calculate_change_importances, match_sentences_tfidf_weighted, detect_changes, match_sentences_semantic_search
+from sentence_comparision import *
 import pysbd
 from collections import Counter
 from utilities import * 
 import numpy as np
-def normalize_scores(keywords):
-
-    if len(keywords) == 0:
-
-        return {}
-
-    max_value = max([v for v in keywords.values()])
-    print(max_value)
-    min_value = min([v for v in keywords.values()])
-    print(min_value)
-    result = {}
-
-    for key, value in keywords.items():
-        
-        normalized_score = (value - float(min_value))/(float(max_value) - float(min_value))
-
-        result[key] = abs(1 - normalized_score)
-
- 
-
-    return result
-
 
 def final_score(documents, changed_indices, new_indices, matched_dict, ranking, max_ngram,
-                additions, removed_indices, deleted, combinator=utilities.alpha_combination, top_k=0, alpha_gamma=0.5, min_ngram = 1,
+                additions, removed_indices, deleted, combinator=utilities.alpha_combination, 
+                top_k=0, alpha_gamma=0.5, min_ngram = 1,
                 symbols_to_remove=string.punctuation, extra_stopwords=[]):
     
+    # init Sentence Boundary Detector
     seg = pysbd.Segmenter(language="en", clean=False)
+
     # tokenize document into sentencs
     sentences_a = seg.segment(documents[0]) 
     
     # tokenize document into sentencs
     sentences_b = seg.segment(documents[-1]) 
 
-    doc_level_stats = build_doc_level_freqs(documents, maxngram=max_ngram)
+    doc_level_stats = build_doc_level_freqs(documents, maxngram=max_ngram, extra_stopwords=extra_stopwords)
 
     # Importance of sentences for current document
     I_sprev = ranking[0]
@@ -73,7 +54,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             current_adds = additions[i].get(int(matched_idx), [])
             current_freqs = build_diff_level_freqs(current_adds, symbols_to_remove)
             # loop over all ngrams/freqs in the sentence
-
+            
             for ngram, freq in current_freqs.items():
                 # ratio := fl / fe 
                 # fe ... frequency of ngram in earlier version
@@ -85,6 +66,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             
         # get frequencies of sentence in older version
         # in order to include deletions as keywords
+        # incase of presence of splits: deleted = unified_diff
         current_deletions = deleted[i]
         old_freqs = build_diff_level_freqs(current_deletions, symbols_to_remove)
 
@@ -149,94 +131,31 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
                            match_sentences =match_sentences_semantic_search, show_changes=False,
                            symbols_to_remove=[","], extra_stopwords=[]):
     
-    versions = len(documents)
     
-    
-    #rank all sentences in their respective version in the total document catalogue
+    # rank all sentences in their respective version
     # available esitmators: text_rank_importance, yake_weighted_importance, yake_unweighted_importance 
     ranking = importance_estimator(documents)
     
-    # intermediate keywords
-    keyword_collection = {version:{} for version in range(versions-1)}
+    # Perform Matching
+    # matchers: semantic_search, weighted_tfidf
+    matched_dict, removed = match_sentences(documents[0], documents[-1],threshold, top_k, matching_model)
     
-    changed_sentences = {version: [] for version in range(versions-1)}
     
-    matched_dicts = {version: {} for version in range(versions-1)}
+    # determine WHAT has changed
+    # Using Myers algorithm
+    changed_indices, new_indices, additions, deletions, matched_indices, unified_delitions = detect_changes(matched_dict, documents[0], documents[-1], 
+                                        important_indices=[], max_ngram=max_ngram, show_output=show_changes,
+                                        symbols_to_remove=symbols_to_remove, top_k=top_k)
     
-    additions = {version: {} for version in range(versions-1)}
     
-    deletions = {version: {} for version in range(versions-1)}
 
-    new = {version: [] for version in range(versions-1)}
-
-    removed = {version: [] for version in range(versions-1)}
-
-    for i in range(versions-1):
-        
-        i_next = i + 1
-        
-        # matching
-        matched_dict, rmv = match_sentences(documents[i], documents[i+1],threshold, top_k, matching_model)
-        
-        
-        matched_dicts[i] = matched_dict
-        
-        # determine WHAT has changed
-        changed_indices, new_indices, adds, delet, matched_indices, unified_delitions = detect_changes(matched_dict, documents[i], documents[i+1], 
-                                           important_indices=[], max_ngram=max_ngram, show_output=show_changes,
-                                           symbols_to_remove=symbols_to_remove, top_k=top_k)
-        
-        
-        additions[i] = adds
-        
-        deletions[i] = delet
-
-        new[i] = new_indices
-        
-        removed[i] = rmv
-        
-        changed_sentences[i] = changed_indices
-        
-        # calculate keywords between two subsequent versions
-        intermediate_keywords = final_score(documents, changed_indices, new_indices, matched_dict, 
-                                            ranking, max_ngram, adds, rmv, unified_delitions, combinator, 
-                                            alpha_gamma=alpha_gamma, min_ngram= min_ngram, 
-                                            symbols_to_remove=symbols_to_remove,
-                                            extra_stopwords=extra_stopwords)
-        
-        # add to overall dictonary
-        # index n: contrastive keywords for versions n and n+1
-        keyword_collection[i] = intermediate_keywords
+    # extract keywords
+    keywords = final_score(documents, changed_indices, new_indices, matched_dict, 
+                                        ranking, max_ngram, additions, removed,
+                                        unified_delitions, combinator, 
+                                        alpha_gamma=alpha_gamma, min_ngram= min_ngram, 
+                                        symbols_to_remove=symbols_to_remove,
+                                        extra_stopwords=extra_stopwords)
     
-    return keyword_collection, matched_dicts, changed_sentences, additions, deletions, new, ranking, removed, matched_indices, unified_delitions
-
-
-
-
-
-def combine_keywords(keywords):
-    total_keywords = {}
     
-    # normalize keyword values
-    normalization_term = len(keywords)
-    
-    for idx in keywords:
-        current_keywords = keywords[idx]
-        
-        for keyword, value in current_keywords.items():
-            
-            # sum up all keywords in the different versions
-            total_keywords[keyword] = total_keywords.get(keyword, 0) + (value / normalization_term)
-    
-    # sorted the keywords
-    sorted_keywords = {k: v for k, v in sorted(total_keywords.items(), key=lambda item: item[1], 
-                                            reverse=True)}
-    
-    return sorted_keywords
-
-
-
-
-
-
-
+    return keywords, matched_dict, changed_indices, additions, deletions, new_indices, ranking, removed, matched_indices, unified_delitions
