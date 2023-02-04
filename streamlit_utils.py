@@ -14,14 +14,12 @@ def is_empty(document):
     return len(document) == 0 or document.isspace()
 
 def create_inter_frame(inter_keywords):
-    keywords_dict = list(inter_keywords.values())
     kws = []
     scores = []
-    for i in range(len(inter_keywords)):
 
-        for kw, score in keywords_dict[i].items():
-            kws.append(kw)
-            scores.append(score)
+    for kw, score in inter_keywords.items():
+        kws.append(kw)
+        scores.append(score)
     
     return kws, scores
 
@@ -95,8 +93,9 @@ def display_keywords(keywords, k):
 def find_max_indices(matched_dict, matched_indices, changed_indices):
     max_index = {i:int(matched_dict[i][0][0]) for i in changed_indices}
     max_score = {i:int(matched_dict[i][0][1]) for i in changed_indices}
-    #splits = []
-    for i in changed_indices:
+    nonmax_mapping = {}
+
+    for i in set(changed_indices):
         if len(matched_dict[i]) > 1:
             for j, score in matched_dict[i]:
                 j = int(j)
@@ -105,22 +104,35 @@ def find_max_indices(matched_dict, matched_indices, changed_indices):
                     
                     max_index[i] = int(j)
                     max_score[i] = score    
-    
-    return max_index
+
+        
+        for idx, _ in matched_dict[i]:
+            if int(idx) != max_index[i]:
+                nonmax_mapping[int(idx)] = max_index[i]
+
+
+    return max_index, nonmax_mapping
 
 def highlight_changes(former, later, changed_indices, matched_dict, new, removed, matched_indices):
 
     # Setup
-    max_index = find_max_indices(matched_dict, matched_indices, changed_indices)
+
+    # Find the index with the highest Semantic Similarity for all split sentences
+    max_index, nonmax_mapping = find_max_indices(matched_dict, matched_indices, changed_indices)
+
     seg = pysbd.Segmenter(language="en", clean=False)
     former_sentences = seg.segment(former.replace("$", "&#36;"))
 
     later_sentences = seg.segment(later.replace("$", "&#36;"))
 
+    # find sentences in newer version that have been matched to
+    # and where the syntatic similarity is below 1.0
     matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
     
+    # includes the split to sentences, without the max split sentence
     splits = []
 
+    # find non-max split sentences
     for i, l in matched_dict.items():
         
         if len(l) > 1:
@@ -134,6 +146,8 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
     st.markdown("<h1 style='text-align: center;'>Sentence Matching Results</h1>", unsafe_allow_html=True)
 
     col_former, col_later = st.columns(2)
+
+    # Matches for Document A
     with col_former:
         st.markdown("<h2 style='text-align: center;'>Original Document</h2>", unsafe_allow_html=True)
 
@@ -146,6 +160,7 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
             else:
                 st.write(former_sentences[i])
 
+    # Matches for Document B
     with col_later:
         st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
 
@@ -153,7 +168,7 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
             if i in new:
                 annotated_text((later_sentences[i], "new", "#4dff4d"))
             elif i in splits:
-                annotated_text((later_sentences[i], f"{str(i)} - split", "#f2f2f2"))
+                annotated_text((later_sentences[i], f"{nonmax_mapping[i]} - split", "#f2f2f2"))
             elif i in matched_and_changed:
                 annotated_text((later_sentences[i], f"{i}", "#f2f2f2"))
             else:
@@ -162,7 +177,10 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 
 def show_sentence_importances(ranking, former, later):
 
+    # Heading
     st.markdown("<h1 style='text-align: center;'>Sentence Importance Calculation</h1>", unsafe_allow_html=True)
+    
+    # Sentence Boundary Detecton (Tokenization)
     seg = pysbd.Segmenter(language="en", clean=False)
     former_sentences = seg.segment(former.replace("$", "&#36;"))
 
@@ -171,6 +189,7 @@ def show_sentence_importances(ranking, former, later):
     rcol1, rcol2 = st.columns(2)
     ranking_earlier = create_ranking_df(ranking[0])
     ranking_latter = create_ranking_df(ranking[1])
+
     with rcol1:
         st.markdown("<h3 style='text-align: center;'>Original Document</h3>", unsafe_allow_html=True)
         st.table(ranking_earlier)
