@@ -393,11 +393,11 @@ def ls(important, to_rank):
 def contrastive_importance(former, later):
 
     # Concat the two document versions
-    combined = text_rank_importance([former + " " + later])[0]
-    print(len(combined))
+    combined = text_rank_importance([former + "\n" + later])[0]
+    
     # reverse the values
     combined = {k: 1/v for k, v in combined.items()}
-
+    
     total = sum(combined.values())
     
     # normalize and sort
@@ -410,11 +410,12 @@ def contrastive_importance(former, later):
 
     # calculate number of sentences in the earlier sentence
     former_length = len(seg.segment(former))
+    latter_length = len(seg.segment(later))
 
     # dictonaries for the respective documents
     ci_former = {k: v for k, v in combined.items() if int(k) < former_length}
 
-    ci_later = {k-former_length+1: v for k, v in combined.items() if int(k) >= former_length}
+    ci_later = {k-former_length: v for k, v in combined.items() if int(k) >= former_length}
 
 
     return ci_former, ci_later
