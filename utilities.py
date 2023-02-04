@@ -23,7 +23,7 @@ def build_sentence_freqs_ngram(sentence, n, symbols_to_remove, extra_stopwords =
     words = [remove_punctuation(word.lower(), symbols_to_remove) for word in words]
     
     words = [word for word in words if len(word) > 0 and word not in stop_words]
-        
+    
     for gram in nltk.ngrams(words, n):
         
         ngram = " ".join(gram)
@@ -51,7 +51,7 @@ def build_sentence_freqs_max_ngram(sentence, higher_ngram, lower_ngram = 1, symb
     return freqs
 
 
-def build_doc_level_freqs(documents, maxngram):
+def build_doc_level_freqs(documents, maxngram, extra_stopwords = []):
     """
     in: documents
     
@@ -68,7 +68,7 @@ def build_doc_level_freqs(documents, maxngram):
         sentences = seg.segment(document.lower())
         freqs = {}
         
-        stop_words = nltk.corpus.stopwords.words("english")
+        stop_words = nltk.corpus.stopwords.words("english") + extra_stopwords
         
         for sentence in sentences:
             words = re.findall(r"[\w']+", sentence)
@@ -96,23 +96,6 @@ def build_diff_level_freqs(diff_content, symbols_to_remove):
     diff_content = [word for word in diff_content if len(word) > 0 and word not in stop_words]
         
     return Counter(diff_content) 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def build_sentence_level_freqs(document):
