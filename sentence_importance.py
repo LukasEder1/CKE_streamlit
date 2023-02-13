@@ -410,7 +410,6 @@ def contrastive_importance(former, later):
 
     # calculate number of sentences in the earlier sentence
     former_length = len(seg.segment(former))
-    latter_length = len(seg.segment(later))
 
     # dictonaries for the respective documents
     ci_former = {k: v for k, v in combined.items() if int(k) < former_length}
