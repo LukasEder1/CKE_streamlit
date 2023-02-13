@@ -85,7 +85,7 @@ def build_doc_level_freqs(documents, maxngram, extra_stopwords = []):
 
 def build_diff_level_freqs(diff_content, symbols_to_remove):
     """
-    in: documents
+    in: documents 
     
     out: dictonary of dictonaries of word frequencies for diff content
     """
@@ -173,6 +173,6 @@ def alpha_combination(I_c, I_s, alpha=0.5):
 def gamma_combination(I_c, I_s, gamma=0.5):
     return I_s ** gamma * I_c ** (1- gamma)
 
-def harmonic_mean(I_c, I_s):
+def harmonic_mean(I_c, I_s, gamma):
     return (2 * I_c * I_s) / (I_c + I_s)
 
