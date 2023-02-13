@@ -25,7 +25,7 @@ def create_inter_frame(inter_keywords):
 
 def annotate_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
     seg = pysbd.Segmenter(language="en", clean=False)
-    sentences = seg.segment(document.replace("$", "&#36;"))
+    sentences = seg.segment(document)
     words = [nltk.word_tokenize(sentences[i])  for i in range(len(sentences))]
     matched_and_changed = [matched_dict[i][k][0] for i in changed_indices for k in range(len(matched_dict[i]))]
     
@@ -90,6 +90,29 @@ def display_keywords(keywords, k):
     
     return df.head(k)
 
+def find_merges(matched_dict):
+    merges = {}
+    maximum_merge = {}
+    maximum_score = {}
+    nonmaximum_mapping = {}
+
+    for k in matched_dict.keys():
+        for idx, score in matched_dict[k]:
+
+            merges[int(idx)] = merges.get(int(idx), []) + [k]
+            if float(score) > maximum_score.get(int(idx), 0.0):
+
+                maximum_score[int(idx)] = float(score)
+                maximum_merge[int(idx)] = k
+
+    for i in merges.keys():
+        for j in merges[i]:
+            if j != maximum_merge[i]:
+
+                nonmaximum_mapping[j] = i
+
+    return merges, maximum_merge, nonmaximum_mapping
+
 def find_max_indices(matched_dict, matched_indices, changed_indices):
     max_index = {i:int(matched_dict[i][0][0]) for i in changed_indices}
     max_score = {i:int(matched_dict[i][0][1]) for i in changed_indices}
@@ -119,11 +142,11 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 
     # Find the index with the highest Semantic Similarity for all split sentences
     max_index, nonmax_mapping = find_max_indices(matched_dict, matched_indices, changed_indices)
-
+    merges, maximum_merges, merges_mapping = find_merges(matched_dict)
     seg = pysbd.Segmenter(language="en", clean=False)
-    former_sentences = seg.segment(former.replace("$", "&#36;"))
+    former_sentences = seg.segment(former)
 
-    later_sentences = seg.segment(later.replace("$", "&#36;"))
+    later_sentences = seg.segment(later)
 
     # find sentences in newer version that have been matched to
     # and where the syntatic similarity is below 1.0
@@ -140,7 +163,10 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
                 if int(j) not in list(max_index.values()):
                     splits.append(int(j))
                     #split_from.update({str(j): max_index[i]})
+    
+    nonmax_merge = list(merges_mapping.keys())
 
+    print(nonmax_merge)
     # Begin Document
 
     st.markdown("<h1 style='text-align: center;'>Sentence Matching Results</h1>", unsafe_allow_html=True)
@@ -156,6 +182,12 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
             if i in removed:
                 annotated_text((former_sentences[i], "deleted", "#ff6666"))
             elif i in changed_indices:
+                """
+                if not i in nonmax_merge:
+                    annotated_text((former_sentences[i], f"{matched_dict[i][0][0]}", "#f2f2f2"))
+                else:
+                    annotated_text((former_sentences[i], f"{matched_dict[i][0][0]} - merge", "#f2f2f2"))
+                """
                 annotated_text((former_sentences[i], f"{matched_dict[i][0][0]}", "#f2f2f2"))
             else:
                 st.write(former_sentences[i])
@@ -182,9 +214,9 @@ def show_sentence_importances(ranking, former, later):
     
     # Sentence Boundary Detecton (Tokenization)
     seg = pysbd.Segmenter(language="en", clean=False)
-    former_sentences = seg.segment(former.replace("$", "&#36;"))
+    former_sentences = seg.segment(former)
 
-    later_sentences = seg.segment(later.replace("$", "&#36;"))
+    later_sentences = seg.segment(later)
 
     rcol1, rcol2 = st.columns(2)
     ranking_earlier = create_ranking_df(ranking[0])
