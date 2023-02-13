@@ -59,11 +59,11 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
                 # ratio := fl / fe 
                 # fe ... frequency of ngram in earlier version
                 # fl ... frequency of ngram in latter version
-                ratio = float(doc_level_stats[1][ngram]) / float(doc_level_stats[0].get(ngram, 1))
+                ratio = float(doc_level_stats[1].get(ngram, 1)) / float(doc_level_stats[0].get(ngram, 1))
+
                 # include added ngrams, scored by their frequency * score of the change 
                 keywords[ngram] = keywords.get(ngram, 0) + float(ratio * freq * s_c)
                 
-            
         # get frequencies of sentence in older version
         # in order to include deletions as keywords
         # incase of presence of splits: deleted = unified_diff
@@ -93,8 +93,10 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
         
         for ngram, freq in current_freqs.items():
             
+            ratio = float(doc_level_stats[1].get(ngram, 1)) / float(doc_level_stats[0].get(ngram, 1))
+            
             # include added ngrams, scored by their frequency * Importance of the sentence
-            keywords[ngram] = keywords.get(ngram, 0) + float(freq * latter_contrastiveness[i])
+            keywords[ngram] = keywords.get(ngram, 0) + float(freq * latter_contrastiveness[i] * ratio)
             
     
     # removed sentence: ( removed := no match found)
@@ -109,8 +111,10 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
         
         for ngram, freq in current_freqs.items():
             
+            ratio = float(doc_level_stats[0].get(ngram, 1)) / float(doc_level_stats[1].get(ngram, 1))
+
             # include deleted ngrams, scored by their frequency * Importance of the sentence
-            keywords[ngram] = keywords.get(ngram, 0) + float(freq * former_contrastiveness[i])
+            keywords[ngram] = keywords.get(ngram, 0) + float(ratio * freq * former_contrastiveness[i])
 
     # normalize keywords
     # total "IMPORTANCE COUNT
