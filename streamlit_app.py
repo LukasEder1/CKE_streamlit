@@ -12,6 +12,7 @@ import pickle
 from annotated_text import annotated_text
 from streamlit_utils import *
 import difflib
+import utilities
 
 with open("docs.pkl", "rb") as file:
     # read list from file
@@ -51,7 +52,9 @@ ies = {"TextRank":sentence_importance.text_rank_importance,
 matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_search,
             "Weighted tfidf": sentence_comparision.match_sentences_tfidf_weighted}
 
-
+combinator = {"Linear Combination": utilities.alpha_combination,
+              "Geometric Combination": utilities.gamma_combination,
+              "Harmonic Mean": utilities.harmonic_mean}
 
 col1, col2 = st.columns(2)
 
@@ -87,6 +90,23 @@ with st.expander("Advanced Settings"):
     match = st.selectbox(
     'Matching Algorithm',
     ('Semantic Search', 'Weighted tfidf'))
+
+    comb = st.selectbox(
+    'Combinator of Sentence Importance and Change Importance',
+    ('Linear Combination', 'Geometric Combination', 'Harmonic Mean'))
+
+    param = 0.5
+
+    if comb == "Linear Combination":
+       st.latex(r'''Score = \alpha * I_s + (1-\alpha) * I_c
+                ''')
+       param = st.slider("Alpha", 0.0, 1.0, 0.5) 
+    if comb == "Geometric Combination":
+        st.latex(r'''Score = I_s^\gamma * I_c^{1-\gamma}''')
+        param = st.slider("Gamma", 0.0, 1.0, 0.5)
+
+    if comb  == "Harmonic Mean":
+        st.latex(r'''Score = \frac{2 * I_c * I_s}{I_c + I_s}''')
 
     # Lower Bound for matching sentences
     lower_bound = st.slider("Semantic matching threshold", 0.0, 1.0, 0.6)
@@ -125,7 +145,9 @@ if run:
                                                                             match_sentences=matchers[match],
                                                                             threshold=lower_bound,
                                                                             extra_stopwords=[stopword.lower() for stopword in stopwords],
-                                                                            top_k=int(num_splits))
+                                                                            top_k=int(num_splits),
+                                                                            combinator=combinator[comb],
+                                                                            alpha_gamma=float(param))
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
@@ -157,5 +179,3 @@ if run:
         # Show and Compare the most Important Sentences
         if show_importance:
             show_sentence_importances(ranking, former, later)
-
-        
