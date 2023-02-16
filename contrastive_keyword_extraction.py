@@ -52,7 +52,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             s_c = combinator(I_ci, I_si, alpha_gamma)
 
             current_adds = additions[i].get(int(matched_idx), [])
-            current_freqs = build_diff_level_freqs(current_adds, symbols_to_remove)
+            current_freqs = build_diff_level_freqs(current_adds, symbols_to_remove, extra_stopwords)
             # loop over all ngrams/freqs in the sentence
             
             for ngram, freq in current_freqs.items():
@@ -68,7 +68,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
         # in order to include deletions as keywords
         # incase of presence of splits: deleted = unified_diff
         current_deletions = deleted[i]
-        old_freqs = build_diff_level_freqs(current_deletions, symbols_to_remove)
+        old_freqs = build_diff_level_freqs(current_deletions, symbols_to_remove, extra_stopwords)
 
         # loop over all ngrams/freqs in the sentence
         for ngram, freq in old_freqs.items():

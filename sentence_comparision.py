@@ -82,7 +82,7 @@ def find_additions_deletions(a, b, extra_stopwords=[]):
     deletions = []
     
     # only consider non-stop words worth including into diff content
-    stop_words = nltk.corpus.stopwords.words("english") + extra_stopwords
+    stop_words = extra_stopwords
 
     # add all monograms that indicate change
     for change in changes:

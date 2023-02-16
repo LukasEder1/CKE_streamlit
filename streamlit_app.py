@@ -51,6 +51,9 @@ combinator = {"Linear Combination": utilities.alpha_combination,
               "Geometric Combination": utilities.gamma_combination,
               "Harmonic Mean": utilities.harmonic_mean}
 
+stopwords_collection = {"NLTK English Stopwords": nltk.corpus.stopwords.words("english"),
+            "None": []}
+
 col1, col2 = st.columns(2)
 
 if article_id == "Custom":
@@ -105,11 +108,16 @@ with st.expander("Advanced Settings"):
 
     # Lower Bound for matching sentences
     lower_bound = st.slider("Semantic matching threshold", 0.0, 1.0, 0.6)
-
+    col_stop1, col_stop2 = st.columns(2)
+    with col_stop1:
+        use_stopwords = st.selectbox(
+    'Preset Stopword Collection',
+    ('NLTK English Stopwords', 'None'))
     # Include extra stopwords
-    stopwords = st.multiselect("Remove additional stopwords",
-                            list(set(nltk.word_tokenize(later)).union(set(nltk.word_tokenize(former)))),
-                            [])
+    with col_stop2:
+        extra_stopwords = st.multiselect("Remove additional stopwords",
+                                list(set(nltk.word_tokenize(later)).union(set(nltk.word_tokenize(former)))),
+                                [])
 
     # Display Ngrams
     show_grams = st.checkbox('Show monograms in context (experimental feature)')
@@ -130,7 +138,8 @@ if run:
 
     
     else:
-        
+        sw = stopwords_collection[use_stopwords] + [stopword.lower() for stopword in extra_stopwords]
+
         keywords, matched_dict, changed_sentences, added, deleted, new, ranking, removed,matched_indices, ud = contrastive_extraction([former, later], 
                                                                             max_ngram=ngram,
                                                                             min_ngram=1, 
@@ -139,7 +148,7 @@ if run:
                                                                             importance_estimator=ies[ie],
                                                                             match_sentences=matchers[match],
                                                                             threshold=lower_bound,
-                                                                            extra_stopwords=[stopword.lower() for stopword in stopwords],
+                                                                            extra_stopwords=sw,
                                                                             top_k=int(num_splits),
                                                                             combinator=combinator[comb],
                                                                             alpha_gamma=float(param))

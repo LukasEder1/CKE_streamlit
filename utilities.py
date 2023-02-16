@@ -14,7 +14,7 @@ def build_sentence_freqs_ngram(sentence, n, symbols_to_remove, extra_stopwords =
     
     out: dictonary of lowercased ngram frequencies without stopwords
     """
-    stop_words = nltk.corpus.stopwords.words("english") + extra_stopwords
+    stop_words = extra_stopwords
 
     freqs = {}
     
@@ -61,14 +61,14 @@ def build_doc_level_freqs(documents, maxngram, extra_stopwords = []):
     number_of_documents = len(documents)
     
     document_frequencies = {version:{} for version in range(number_of_documents)}
-    
+    stop_words =  extra_stopwords
     current_version = 0
     seg = pysbd.Segmenter(language="en", clean=False)
     for document in documents:
         sentences = seg.segment(document.lower())
         freqs = {}
         
-        stop_words = nltk.corpus.stopwords.words("english") + extra_stopwords
+        
         
         for sentence in sentences:
             words = re.findall(r"[\w']+", sentence)
@@ -83,7 +83,7 @@ def build_doc_level_freqs(documents, maxngram, extra_stopwords = []):
         
     return document_frequencies
 
-def build_diff_level_freqs(diff_content, symbols_to_remove):
+def build_diff_level_freqs(diff_content, symbols_to_remove, stop_words):
     """
     in: documents 
     
@@ -91,7 +91,7 @@ def build_diff_level_freqs(diff_content, symbols_to_remove):
     """
     diff_content = [remove_punctuation(word.lower(), [","]) for word in diff_content]
 
-    stop_words = nltk.corpus.stopwords.words("english")
+    #stop_words = nltk.corpus.stopwords.words("english")
 
     diff_content = [word for word in diff_content if len(word) > 0 and word not in stop_words]
         
@@ -105,6 +105,8 @@ def build_sentence_level_freqs(document):
     out: dictonary of dictonaries of word frequencies without stopwords
     """
     
+    seg = pysbd.Segmenter(language="en", clean=False)
+
     sentences = seg.segment(document)
       
     sentences = [sentence.lower() for sentence in sentences]
@@ -160,12 +162,6 @@ def drop_unimportant_indices(indices, important_indices):
     
     # of some version!
     return list(set(indices) & set(important_indices))
-
-def get_sentences(indices, version):
-    # get all sentences from version v present in list "indices"
-    sentences = seg.segment(documents[version])
-    return [sentences[index] for index in indices]
-
 
 def alpha_combination(I_c, I_s, alpha=0.5):
     return alpha * I_s + (1- alpha) * I_c
