@@ -39,8 +39,7 @@ article_id = st.selectbox(
 
 
 ies = {"TextRank":sentence_importance.text_rank_importance,
-      "Yake Weighted Keyword Count": sentence_importance.yake_weighted_importance,
-      "Yake Unweighted Keyword Count": sentence_importance.yake_unweighted_importance
+      "Yake Weighted Keyword Count": sentence_importance.yake_weighted_importance
       }
 
 
@@ -82,36 +81,43 @@ with st.expander("Advanced Settings"):
     # How to evaluate the Importance of Sentences
     ie = st.selectbox(
     'Importance Estimator',
-    ('TextRank', 'Yake Weighted Keyword Count', 'Yake Unweighted Keyword Count'))
+    ('TextRank', 'Yake Weighted Keyword Count'))
 
     # How to match Sentences
     match = st.selectbox(
     'Matching Algorithm',
     ('Semantic Search', 'Weighted tfidf'))
 
+    # How to combine Sentence Importance and Change Importance
     comb = st.selectbox(
     'Combinator of Sentence Importance and Change Importance',
     ('Linear Combination', 'Geometric Combination', 'Harmonic Mean'))
 
+
+    # Corresponding Parameter
     param = 0.5
 
     if comb == "Linear Combination":
-       param = st.slider("Alpha", 0.0, 1.0, 0.5) 
+       param = st.slider("Beta", 0.0, 1.0, 0.5) 
     
     if comb == "Geometric Combination":
         param = st.slider("Gamma", 0.0, 1.0, 0.5)
 
     # Lower Bound for matching sentences
     lower_bound = st.slider("Semantic matching threshold", 0.0, 1.0, 0.6)
+
+    # Fine Control over the use of Stopwords
     col_stop1, col_stop2 = st.columns(2)
     with col_stop1:
         use_stopwords = st.selectbox(
-    'Preset Stopword Collection',
-    ('NLTK English Stopwords', 'None'))
+            'Preset Stopword Collection',
+            ('NLTK English Stopwords', 'None')
+        )
+
     # Include extra stopwords
     with col_stop2:
         extra_stopwords = st.multiselect("Remove additional stopwords",
-                                list(set(nltk.word_tokenize(later)).union(set(nltk.word_tokenize(former)))),
+                                union_of_words(former, later),
                                 [])
 
     # Display Ngrams
@@ -151,6 +157,7 @@ if run:
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
         st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
+        
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))
         kws = keywords

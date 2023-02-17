@@ -233,3 +233,9 @@ def show_sentence_importances(ranking, former, later):
         st.table(ranking_latter)
         for i in list(ranking[1].keys()):
             annotated_text((later_sentences[i], f"{round(ranking[1][i], 4)}", "#f2f2f2"))
+
+
+def union_of_words(former, latter):
+    former = re.findall(r"[\w']+", former.lower())
+    latter = re.findall(r"[\w']+", latter.lower())
+    return sorted(list(set(latter).union(set(former))))
