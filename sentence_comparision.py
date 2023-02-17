@@ -165,8 +165,7 @@ def find_additions_deletions_max_ngram(a, b, max_ngram, symbols_to_remove, extra
     
     return additions, deletions
 
-
-def match_sentences_tfidf_weighted(document_a, document_b, threshold = 0.6, *args):
+def match_sentences_tfidf_weighted(document_a, document_b, threshold = 0.6, k=1, *args):
     
     seg = pysbd.Segmenter(language="en", clean=False)
 
@@ -176,42 +175,41 @@ def match_sentences_tfidf_weighted(document_a, document_b, threshold = 0.6, *arg
     # Use the sentences in B as our corpus
     corpus = seg.segment(document_b)
     
+    # list of deleted sentences from A
     deleted_sentences = []
+    
     # matched_sentences dict:
     # key = query_idx
     # value = list of matched sentences and score pairs = [(matched_sentence, similarity_score)]
-    matched_sentences = {i:[(-1, 0)] for i in range(len(queries))}
+    matched_sentences = {i:[] for i in range(len(queries))}
+
+    top_k = min(k, len(corpus))
     
     for query_idx in range(len(queries)):
         
         query = queries[query_idx]
         # combine the sentences into a single list
         sents = [query] + corpus
-
+        
         # create a tf-idf matrix for the sentences
         vectorizer = TfidfVectorizer()
         tfidf_matrix = vectorizer.fit_transform(sents)
-
-        # find the cosine similarity of the sentences in the tf-idf matrix
         cosine_similarities = np.dot(tfidf_matrix, tfidf_matrix.T)
+        
+        # get tfidf score between query and all sentences in the corpus
+        cos_scores = torch.FloatTensor([cosine_similarities[0, i] for i in range(1, len(corpus)+1)])
+        top_results = torch.topk(cos_scores, k=top_k)
+        
+        match_found = False
+        for score, idx in zip(top_results[0], top_results[1]):
 
-        # print the sentences with high tf-idf weight and cosine similarity
+            # fill the matched sentences dictonary
+            if score > threshold:
+
+                matched_sentences[query_idx].append((idx, score))
+                match_found = True
         
-        maximum_score = cosine_similarities[0, 1]
-        max_idx = 0
-        
-        for i in range(2, len(sents)):
-            if cosine_similarities[0, i] > maximum_score:
-                maximum_score = cosine_similarities[0, i]
-                max_idx = i - 1
-                
-        #print("score: ", round(maximum_score, 5), "\n")
-        #print("Query:", query)
-        #print("Matched:", sents[max_idx], "\n")
-        if maximum_score > threshold:
-            matched_sentences[query_idx] = [(max_idx, round(maximum_score, 5))]
-        
-        if max_idx == -1:
+        if not match_found:
             deleted_sentences.append(query_idx)
 
     return matched_sentences, deleted_sentences
@@ -251,6 +249,7 @@ def match_sentences_semantic_search(document_a, document_b, threshold=0.6, k = 3
 
         # We use cosine-similarity and torch.topk to find the highest k scores
         cos_scores = util.cos_sim(query_embedding, corpus_embeddings)[0]
+        
         top_results = torch.topk(cos_scores, k=top_k)
         
         # loop over top results
