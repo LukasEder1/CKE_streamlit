@@ -15,4 +15,6 @@
 </div>
 
 
-![pipeline](https://github.com/LukasEder1/CKE_streamlit/blob/main/updated_pipeline.png)
+<div align="center">
+<img src="https://github.com/LukasEder1/CKE_streamlit/blob/main/revamped.png">
+</div>
