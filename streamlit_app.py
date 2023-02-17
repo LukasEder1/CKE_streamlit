@@ -96,15 +96,10 @@ with st.expander("Advanced Settings"):
     param = 0.5
 
     if comb == "Linear Combination":
-       st.latex(r'''Score = \alpha * I_s + (1-\alpha) * I_c
-                ''')
        param = st.slider("Alpha", 0.0, 1.0, 0.5) 
+    
     if comb == "Geometric Combination":
-        st.latex(r'''Score = I_s^\gamma * I_c^{1-\gamma}''')
         param = st.slider("Gamma", 0.0, 1.0, 0.5)
-
-    if comb  == "Harmonic Mean":
-        st.latex(r'''Score = \frac{2 * I_c * I_s}{I_c + I_s}''')
 
     # Lower Bound for matching sentences
     lower_bound = st.slider("Semantic matching threshold", 0.0, 1.0, 0.6)
