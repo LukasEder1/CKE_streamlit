@@ -6,53 +6,105 @@ import re
 import pickle
 from annotated_text import annotated_text
 import pysbd
+import math
+
+def get_ngrams_of_size_n(diff_content, ngram_size):
+    return [ngram for ngram in diff_content if len(ngram.split(" ")) == ngram_size]
+
 
 def get_matched_indices(matched_dict):
+    """ Get indices of matched Sentences
+
+    Args:
+        matched_dict (dict):Keys: Indices of Document A, 
+                            Values: List of Pairs <Index of Document B| semantic similarity>
+
+    Returns:
+        List of all sentences in version B, that have been matched to
+    """
     return [i for i in list(matched_dict.keys()) if len(matched_dict[i]) > 0]
 
 def is_empty(document):
     return len(document) == 0 or document.isspace()
 
-def create_inter_frame(inter_keywords):
+def create_keyword_frame(keywords):
+    """ Cast kw-dictonary to pandas DataFrame
+
+    Args:
+        keywords (dict): Keyword, Score Pairs
+
+    Returns:
+        DataFrame with Keyword, Score Columns
+    
+    """
     kws = []
     scores = []
 
-    for kw, score in inter_keywords.items():
+    for kw, score in keywords.items():
         kws.append(kw)
         scores.append(score)
     
     return kws, scores
 
-def annotate_keywords(document, intermediate_keywords, changed_indices, matched_dict, new, ngram, added):
+def annotate_keywords(documents, intermediate_keywords, changed_indices, matched_dict, new, ngram, added, removed, deleted):
     seg = pysbd.Segmenter(language="en", clean=False)
-    sentences = seg.segment(document)
-    words = [nltk.word_tokenize(sentences[i])  for i in range(len(sentences))]
+    sentences_a = seg.segment(documents[0])
+    sentences_b = seg.segment(documents[-1])
+    words_a = [re.findall(r"[\w']+", sentences_a[i].lower())  for i in range(len(sentences_a))]
+    words_b = [re.findall(r"[\w']+", sentences_b[i].lower())  for i in range(len(sentences_b))]
     matched_and_changed = [matched_dict[i][k][0] for i in changed_indices for k in range(len(matched_dict[i]))]
-    
+    keywords = list(intermediate_keywords.keys())
+    print("KW: ", keywords, "END")
     for i in changed_indices:
         for k in range(len(matched_dict[i])):
             matched_idx, _ = matched_dict[i][k]
-            sentence = sentences[int(matched_idx)]
-            keywords = list(intermediate_keywords.keys())
-            for j in range(len(words[matched_idx])):
-                word = words[matched_idx][j]
+            
+            
+            for j in range(len(words_b[matched_idx])):
+                word = words_b[matched_idx][j]
 
                 if type(word) != str:
                     break
 
                 if word.lower() in added[i].get(int(matched_idx), []) and word.lower() in keywords:
-                    words[matched_idx][j] = (f"{word}", f"{round(intermediate_keywords[word.lower()], 5)}")
+                    words_b[matched_idx][j] = (f"{word}", f"{round(intermediate_keywords[word.lower()], 5)}")
 
                 else:
-                    words[matched_idx][j] += " "
+                    words_b[matched_idx][j] += " "
 
-    for i in range(len(words)):
-        if i in matched_and_changed:
-            annotated_text(*words[i])
-        elif i in new:
-            annotated_text((sentences[i], "new"))
-        else:
-            st.write(sentences[i])
+        for j in range(len(words_a[i])):
+            word = words_a[i][j]
+
+            if type(word) != str:
+                break
+
+            if word.lower() in deleted[i] and word.lower() in keywords:
+                words_a[i][j] = (f"{word}", f"{round(intermediate_keywords[word.lower()], 5)}")
+
+            else:
+                words_a[i][j] += " "
+
+
+    col_former, col_later = st.columns(2)
+    with col_former:
+        st.markdown("<h2 style='text-align: center;'>Original Document</h2>", unsafe_allow_html=True)
+        for i in range(len(words_a)):
+            if i in changed_indices:
+                annotated_text(*words_a[i])
+            elif i in removed:
+                annotated_text((sentences_b[i], "removed"))
+            else:
+                st.write(sentences_b[i])
+
+    with col_later:
+        st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+        for i in range(len(words_b)):
+            if i in matched_and_changed:
+                annotated_text(*words_b[i])
+            elif i in new:
+                annotated_text((sentences_b[i], "new", "#00e600"))
+            else:
+                st.write(sentences_b[i])
 
 def changed_df(added, matched_dict, deleted):
     original_indices = []
@@ -85,8 +137,8 @@ def create_ranking_df(rank):
                         "Importance Score": list(rank.values())})
 
 def display_keywords(keywords, k):
-    inter_kws, inter_scores = create_inter_frame(keywords)
-    df = pd.DataFrame({'keyword': inter_kws, 'score': inter_scores})
+    kws, scores = create_keyword_frame(keywords)
+    df = pd.DataFrame({'keyword': kws, 'score': scores})
     
     return df.head(k)
 
@@ -166,7 +218,6 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
     
     nonmax_merge = list(merges_mapping.keys())
 
-    print(nonmax_merge)
     # Begin Document
 
     st.markdown("<h1 style='text-align: center;'>Sentence Matching Results</h1>", unsafe_allow_html=True)
@@ -198,7 +249,7 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 
         for i in range(len(later_sentences)):
             if i in new:
-                annotated_text((later_sentences[i], "new", "#4dff4d"))
+                annotated_text((later_sentences[i], "new", "#00e600"))
             elif i in splits:
                 annotated_text((later_sentences[i], f"{nonmax_mapping[i]} - split", "#f2f2f2"))
             elif i in matched_and_changed:

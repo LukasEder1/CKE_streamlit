@@ -288,6 +288,7 @@ def unified_diffs(siblings):
     
     return unified_content
 
+
 def detect_changes(matched_dict, document_a, document_b, important_indices, max_ngram,top_k=1, show_output=False,       
                    symbols_to_remove=[","], extra_stopwords=[]):
     
@@ -364,53 +365,4 @@ def detect_changes(matched_dict, document_a, document_b, important_indices, max_
     return changed_sentences, new_sentences, save_additions, save_deletions, matched_indices, unified_delitions
                     
             
-                    
-def calculate_change_importance(changed_idx, matched_dict, ranking,
-                                threshold, version,w0, w1, w2, top_k =1):
-    
-    """Calculate how important an actual change was.
-    
-    Using Hyp 1-2
-
-    Args:
-       matched_dict: calcualted using match_sentences
-       ranking: sentence_importance obtained using rank_YAKE!
-       threshold: Hyperparameter to determine if sentence is new
-       w0-w2: optionally tuned weights
-       top_k: only usefull if sentence matching is being ran with extra k
-        
-    Returns:
-        Importance of 1 change.
-    """
-    
-    I_s = ranking[version][changed_idx]
-    
-    for k in range(len(matched_dict[changed_idx])):
-        matched_idx, score = matched_dict[changed_idx][k]
-
-        next_I_s = ranking[version + 1][int(matched_idx)]
-
-        if score < threshold:
-            # Hypothesis 2
-            print("A")
-            I_c = next_I_s * (w2/ w1 * score)
-        else:    
-            # Hypothesis 1
-            print("B")
-            I_c = I_s * (w0/ w1 * score)
-    
-    return I_c
-
-
-def calculate_change_importances(changed_indices, matched_dict,
-                                 ranking, threshold, version, w0=1, w1=1, w2=1, k=1):
-    
-    return {changed_index: calculate_change_importance(changed_index, matched_dict,ranking,threshold, version, w0, w1, w2, top_k=k) 
-            for changed_index in changed_indices}
-
-
-
-
-
-
-
+  

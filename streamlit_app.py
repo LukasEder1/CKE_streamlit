@@ -1,25 +1,20 @@
 from contrastive_keyword_extraction import contrastive_extraction 
-import sqlite3
 import pandas as pd
 import string
 import sentence_importance
 import sentence_comparision
 import streamlit as st
 import nltk
-import numpy as np
-import re
 import pickle
-from annotated_text import annotated_text
 from streamlit_utils import *
-import difflib
 import utilities
 
+# Dictonary of preset versioned Documents
 with open("docs.pkl", "rb") as file:
-    # read list from file
     docs = pickle.load(file)
 
 
-# BEGIN DOCUMENT
+# BEGIN META
 st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 st.header('Contrastive Keyword Extraction')
 
@@ -29,13 +24,12 @@ pd.set_option('display.max_columns', None)
 nltk.download("punkt")
 nltk.download('stopwords')
 
-
+ 
 article_id = st.selectbox(
     'Choose a Document or try it with your own one.',
     ("Custom", "Example 0", "Example 1", "Article 16159", "Article 17313", 
     "Article 17748","Policy 99880", "Policy 90232", "Policy 98447",
      "Policy 106601", "Policy 106604"))
-
 
 
 ies = {"TextRank":sentence_importance.text_rank_importance,
@@ -46,12 +40,15 @@ ies = {"TextRank":sentence_importance.text_rank_importance,
 matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_search,
             "Weighted tfidf": sentence_comparision.match_sentences_tfidf_weighted}
 
+
 combinator = {"Linear Combination": utilities.alpha_combination,
               "Geometric Combination": utilities.gamma_combination,
               "Harmonic Mean": utilities.harmonic_mean}
 
+
 stopwords_collection = {"NLTK English Stopwords": nltk.corpus.stopwords.words("english"),
             "None": []}
+
 
 col1, col2 = st.columns(2)
 
@@ -60,7 +57,7 @@ if article_id == "Custom":
 else:
     documents = docs[int(article_id.split(" ")[1])]
 
-
+# BEGIN GUI
 with col1:
 
     # Ngram Size of the Keywords
@@ -89,6 +86,7 @@ with st.expander("Advanced Settings"):
     ('Semantic Search', 'Weighted tfidf'))
 
     # How to combine Sentence Importance and Change Importance
+    # defined as phi in paper
     comb = st.selectbox(
     'Combinator of Sentence Importance and Change Importance',
     ('Linear Combination', 'Geometric Combination', 'Harmonic Mean'))
@@ -123,12 +121,15 @@ with st.expander("Advanced Settings"):
     # Display Ngrams
     show_grams = st.checkbox('Show monograms in context (experimental feature)')
 
-    # Display Importance of Sentences
+    # Display  Sentence Importances
     show_importance = st.checkbox('Show Sentence Ranking (depends on the Importance Estimator)')
 
+    # Upper bound on the possible number of splits
     num_splits = st.number_input("Number of Splits allowed", 1, 4, 1)
 
+
 run = st.button('Compare Documents')
+
 
 # BEGIN: Display Results
 if run:
@@ -139,8 +140,11 @@ if run:
 
     
     else:
+        # combine stopwords from collection and extra stopwords
         sw = stopwords_collection[use_stopwords] + [stopword.lower() for stopword in extra_stopwords]
 
+
+        # Extract Keywords, and Matched sentences
         keywords, matched_dict, changed_sentences, added, deleted, new, ranking, removed,matched_indices, ud = contrastive_extraction([former, later], 
                                                                             max_ngram=ngram,
                                                                             min_ngram=1, 
@@ -157,7 +161,7 @@ if run:
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
         st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
-        
+
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.table(display_keywords(keywords, top_k))
         kws = keywords
@@ -165,13 +169,15 @@ if run:
         # Highlight Contrastive Keywords in Context        
         if show_grams:
             st.markdown("<h1 style='text-align: center;'>Keywords in Context</h1>", unsafe_allow_html=True)
-            annotate_keywords(later, 
+            annotate_keywords([former, later], 
                             {k: kws[k] for k in list(kws)[:top_k]},
                             changed_sentences,
                             matched_dict,
                             new,
                             added=added, 
-                            ngram=1)
+                            ngram=ngram,
+                            removed=removed,
+                            deleted=ud)
 
         # Highlight matched/deleted/added and split sentences
         highlight_changes(former,
