@@ -15,4 +15,6 @@
 </div>
 
 
-![pipeline](https://github.com/LukasEder1/ContrastiveKeywordExtraction/blob/main/images/pipeline.png)
+<div align="center">
+<img src="https://github.com/LukasEder1/CKE_streamlit/blob/main/revamped.png">
+</div>
