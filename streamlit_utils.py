@@ -92,7 +92,7 @@ def annotate_keywords(documents, intermediate_keywords, changed_indices, matched
             if i in changed_indices:
                 annotated_text(*words_a[i])
             elif i in removed:
-                annotated_text((sentences_b[i], "removed"))
+                annotated_text((sentences_b[i], "removed", "#ff6666"))
             else:
                 st.write(sentences_b[i])
 
@@ -231,7 +231,7 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
         # use the annotated component to highlight text
         for i in range(len(former_sentences)):
             if i in removed:
-                annotated_text((former_sentences[i], "deleted", "#ff6666"))
+                annotated_text((former_sentences[i], "removed", "#ff6666"))
             elif i in changed_indices:
                 """
                 if not i in nonmax_merge:
