@@ -29,7 +29,7 @@ article_id = st.selectbox(
     'Choose a Document or try it with your own one.',
     ("Custom", "Example 0", "Example 1", "Article 16159", "Article 17313", 
     "Article 17748","Policy 99880", "Policy 90232", "Policy 98447",
-     "Policy 106601", "Policy 106604"))
+     "Policy 106601", "Policy 106604"), help="Examples taken from: https://privacypolicies.cs.princeton.edu/ and https://github.com/isi-nlp/NewsEdits")
 
 
 ies = {"TextRank":sentence_importance.text_rank_importance,
@@ -89,7 +89,10 @@ with st.expander("Advanced Settings"):
     # defined as phi in paper
     comb = st.selectbox(
     'Combinator of Sentence Importance and Change Importance',
-    ('Linear Combination', 'Geometric Combination', 'Harmonic Mean'))
+    ('Linear Combination', 'Geometric Combination', 'Harmonic Mean'),
+    help='''Determines how the importance of a sentence in the original document gets combined with
+        the importance of the change between this sentence and it's matched counterpart. 
+        ''')
 
 
     # Corresponding Parameter
@@ -102,7 +105,8 @@ with st.expander("Advanced Settings"):
         param = st.slider("Gamma", 0.0, 1.0, 0.5)
 
     # Lower Bound for matching sentences
-    lower_bound = st.slider("Semantic matching threshold", 0.0, 1.0, 0.6)
+    lower_bound = st.slider("Semantic Matching Threshold", 0.0, 1.0, 0.6, help='''Acts as a lower bound 
+                            for whether or not two sentences match''')
 
     # Fine Control over the use of Stopwords
     col_stop1, col_stop2 = st.columns(2)
