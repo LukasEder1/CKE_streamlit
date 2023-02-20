@@ -2,7 +2,7 @@
 <br />
 <div align="center">
 
-  <h3 align="center">Contrastive Keyword Extraction from Documents</h3>
+  <h3 align="center">Contrastive Keyword Extraction from Versioned Documents</h3>
 
   <p align="center">
     This Streamlit App, implements, the Contrastive Keyword pipeline depicted below.
