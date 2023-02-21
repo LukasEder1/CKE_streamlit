@@ -91,7 +91,7 @@ with st.expander("Advanced Settings"):
     'Combinator of Sentence Importance and Change Importance',
     ('Linear Combination', 'Geometric Combination', 'Harmonic Mean'),
     help='''Determines how the importance of a sentence in the original document gets combined with
-        the importance of the change between this sentence and it's matched counterpart. 
+        the importance of the change between this sentence and its matched counterpart. 
         ''')
 
 
