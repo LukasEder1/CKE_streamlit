@@ -59,7 +59,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
                 # ratio := fl / fe 
                 # fe ... frequency of ngram in earlier version
                 # fl ... frequency of ngram in latter version
-                ratio = float(doc_level_stats[1].get(ngram, 1)) / float(doc_level_stats[0].get(ngram, 1))
+                ratio = float(doc_level_stats[1].get(ngram, 0)) / float(doc_level_stats[0].get(ngram, 1))
 
                 # include added ngrams, scored by their frequency * score of the change 
                 keywords[ngram] = keywords.get(ngram, 0) + float(ratio * freq * s_c)
@@ -75,7 +75,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             # ratio := fe / fl
             # fe ... frequency of ngram in earlier version
             # fl ... frequency of ngram in latter version
-            ratio = doc_level_stats[0][ngram] / doc_level_stats[1].get(ngram, 1)
+            ratio = doc_level_stats[0].get(ngram, 0) / doc_level_stats[1].get(ngram, 1)
             
             # include deleted ngrams, scored by their frequency * score of the change
             keywords[ngram] = keywords.get(ngram, 0) + float(ratio * freq * s_c)
