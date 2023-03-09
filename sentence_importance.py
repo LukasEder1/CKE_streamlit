@@ -6,7 +6,6 @@ import yake
 from summa import summarizer
 import nltk
 from sentence_transformers import SentenceTransformer, util
-from LexRank import degree_centrality_scores
 import re
 from yake.highlight import TextHighlighter
 import keyword_extraction
@@ -183,46 +182,6 @@ def text_rank(documents):
             
         # find corresponding indices in original corpus
         important_indices[current] = find_important_indices(important_sentences[current], document)
-        
-    return important_sentences, important_indices
-
-
-def lex_rank(documents, n=10, model='all-MiniLM-L6-v2'):
-    model = SentenceTransformer(model)
-
-    # Our input document we want to summarize
-    # As example, we take the first section from Wikipedia
-    seg = pysbd.Segmenter(language="en", clean=False)
-    number_of_documents = len(documents)
-    important_sentences = {version:[] for version in range(number_of_documents)}
-    important_indices = {version:[] for version in range(number_of_documents)}
-    
-    for current in range(number_of_documents):
-    #Split the document into sentences
-        sentences = seg.segment(documents[current])
-
-        #Compute the sentence embeddings
-        embeddings = model.encode(sentences, convert_to_tensor=True)
-
-        #Compute the pair-wise cosine similarities
-        cos_scores = util.cos_sim(embeddings, embeddings).numpy()
-
-        #Compute the centrality for each sentence
-        centrality_scores = degree_centrality_scores(cos_scores, threshold=None)
-
-        #We argsort so that the first element is the sentence with the highest score
-        most_central_sentence_indices = np.argsort(-centrality_scores)
-
-
-        #use the n sentences with the highest scores
-        top_sentences = []
-        top_indices = []
-        for idx in most_central_sentence_indices[0:n]:
-            top_sentences.append(sentences[idx].strip())
-            top_indices.append(idx)
-            
-        important_sentences[current] = top_sentences
-        important_indices[current] = top_indices
         
     return important_sentences, important_indices
 
