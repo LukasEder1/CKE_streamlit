@@ -162,8 +162,7 @@ def find_additions_deletions_max_ngram(a, b, max_ngram, symbols_to_remove, extra
         additions += current_additions
         deletions += current_deletions
     
-    
-    return additions, deletions
+    return utilities.remove_lower_ngrams(additions, max_ngram), utilities.remove_lower_ngrams(deletions, max_ngram)
 
 def match_sentences_tfidf_weighted(document_a, document_b, threshold = 0.6, k=1, *args):
     
