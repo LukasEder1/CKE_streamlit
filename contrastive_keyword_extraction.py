@@ -62,7 +62,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
                 ratio = float(doc_level_stats[1].get(ngram, 0)) / float(doc_level_stats[0].get(ngram, 1))
 
                 # include added ngrams, scored by their frequency * score of the change 
-                keywords[ngram] = keywords.get(ngram, 0) + float(ratio * freq * s_c)
+                keywords[ngram] = keywords.get(ngram, 0) + float(ratio * np.log(freq + 0.001) * s_c)
                 
         # get frequencies of sentence in older version
         # in order to include deletions as keywords
@@ -78,7 +78,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             ratio = doc_level_stats[0].get(ngram, 0) / doc_level_stats[1].get(ngram, 1)
             
             # include deleted ngrams, scored by their frequency * score of the change
-            keywords[ngram] = keywords.get(ngram, 0) + float(ratio * freq * s_c)
+            keywords[ngram] = keywords.get(ngram, 0) + float(ratio * np.log(freq + 0.001)  * s_c)
 
 
     # newly added sentence: ( new := has not been matched to)
