@@ -8,12 +8,13 @@ import re
 
 
 def get_ngrams_of_size_n(diff_content, ngram_size):
-    return [ngram for ngram in diff_content if len(ngram.split(" ")) == ngram_size]
+    return [ngram.lower() for ngram in diff_content if len(ngram.split(" ")) == ngram_size]
 
 
-def independent_words_pairs(list):
-    word_counts = Counter(get_ngrams_of_size_n(list, 1))
-    words = get_ngrams_of_size_n(list, 1)
+def independent_words_pairs(list, max_ngram):
+    words = [word for ngram in get_ngrams_of_size_n(list, max_ngram) for word in ngram.split(" ")]
+    word_counts = Counter(words)
+    ws = [w for w in get_ngrams_of_size_n(list, 1) if w not in words]
     bigrams = get_ngrams_of_size_n(list, 2)
 
     for word1, word2 in itertools.combinations(words, 2):
@@ -25,7 +26,7 @@ def independent_words_pairs(list):
                 words.remove(word2)
                 
 
-    return words
+    return words + ws
 
 def merge(ngram1, ngram2):
     words1 = ngram1.split(" ")
@@ -47,7 +48,7 @@ def independent_ngram_pairs(list, n):
     for ngram1, ngram2 in itertools.combinations(ngrams, 2):
         mgram = merge(ngram1, ngram2)
         if mgram in mgrams:
-            print(mgram)
+
             if freq.get(ngram1, 0) > 0 and freq.get(ngram2, 0) > 0:
                 freq[ngram1] -= 1
                 ngrams.remove(ngram1)
@@ -58,7 +59,9 @@ def independent_ngram_pairs(list, n):
 def remove_lower_ngrams(list, max_ngram):
     filtered_list = []
 
-    filtered_list += independent_words_pairs(list)
+    filtered_list += independent_words_pairs(list, max_ngram)
+    print(list)
+    print(independent_words_pairs(list, max_ngram))
     for i in range(2, max_ngram+1):
         filtered_list += independent_ngram_pairs(list, i) 
     
@@ -105,6 +108,7 @@ def build_sentence_freqs_max_ngram(sentence, higher_ngram, lower_ngram = 1, symb
     freqs = {}
     for n in range(lower_ngram, higher_ngram+1):
         freqs.update(build_sentence_freqs_ngram(sentence, n, symbols_to_remove, extra_stopwords))
+
 
     filtered = remove_lower_ngrams(list(freqs.keys()), higher_ngram)
 
