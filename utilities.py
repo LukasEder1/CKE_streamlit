@@ -64,6 +64,9 @@ def remove_lower_ngrams(list, max_ngram):
     return filtered_list
 
 
+def remove_punctuation(text, symbols=string.punctuation):
+    return "".join([char for char in text if char not in symbols])
+
 def build_sentence_freqs_ngram(sentence, n, symbols_to_remove, extra_stopwords = []):
     """
     in: sentence
