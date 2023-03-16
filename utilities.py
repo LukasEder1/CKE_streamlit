@@ -11,10 +11,9 @@ def get_ngrams_of_size_n(diff_content, ngram_size):
     return [ngram.lower() for ngram in diff_content if len(ngram.split(" ")) == ngram_size]
 
 
-def independent_words_pairs(list, max_ngram):
-    words = [word for ngram in get_ngrams_of_size_n(list, max_ngram) for word in ngram.split(" ")]
-    word_counts = Counter(words)
-    ws = [w for w in get_ngrams_of_size_n(list, 1) if w not in words]
+def independent_words_pairs(list):
+    word_counts = Counter(get_ngrams_of_size_n(list, 1))
+    words = get_ngrams_of_size_n(list, 1)
     bigrams = get_ngrams_of_size_n(list, 2)
 
     for word1, word2 in itertools.combinations(words, 2):
@@ -24,9 +23,9 @@ def independent_words_pairs(list, max_ngram):
                 words.remove(word1)
                 word_counts[word2] -= 1
                 words.remove(word2)
-                
 
-    return words + ws
+
+    return words
 
 def merge(ngram1, ngram2):
     words1 = ngram1.split(" ")
@@ -34,10 +33,10 @@ def merge(ngram1, ngram2):
 
     if words1[0] == words2[-1]:
         return " ".join(words2[:-1] + words1)
-    
+
     if words1[-1] == words2[0]:
         return " ".join(words1[:-1] + words2)
-    
+
     return ""
 
 
@@ -48,7 +47,6 @@ def independent_ngram_pairs(list, n):
     for ngram1, ngram2 in itertools.combinations(ngrams, 2):
         mgram = merge(ngram1, ngram2)
         if mgram in mgrams:
-
             if freq.get(ngram1, 0) > 0 and freq.get(ngram2, 0) > 0:
                 freq[ngram1] -= 1
                 ngrams.remove(ngram1)
@@ -59,15 +57,11 @@ def independent_ngram_pairs(list, n):
 def remove_lower_ngrams(list, max_ngram):
     filtered_list = []
 
-    filtered_list += independent_words_pairs(list, max_ngram)
-    print(list)
-    print(independent_words_pairs(list, max_ngram))
+    filtered_list += independent_words_pairs(list)
     for i in range(2, max_ngram+1):
         filtered_list += independent_ngram_pairs(list, i) 
-    
+
     return filtered_list
-def remove_punctuation(text, symbols=string.punctuation):
-    return "".join([char for char in text if char not in symbols])
 
 
 def build_sentence_freqs_ngram(sentence, n, symbols_to_remove, extra_stopwords = []):
