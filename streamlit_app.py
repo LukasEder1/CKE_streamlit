@@ -149,7 +149,7 @@ if run:
 
 
         # Extract Keywords, and Matched sentences
-        keywords, matched_dict, changed_sentences, added, deleted, new, ranking, removed,matched_indices, ud = contrastive_extraction([former, later], 
+        keywords, former_keywords, latter_keywords, matched_dict, changed_sentences, added, deleted, new, ranking, removed,matched_indices, ud = contrastive_extraction([former, later], 
                                                                             max_ngram=ngram,
                                                                             min_ngram=1, 
                                                                             show_changes=False, 
@@ -166,8 +166,10 @@ if run:
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
         st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
 
+
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
-        st.table(display_keywords(keywords, top_k))
+        display_keywords(keywords, former_keywords, latter_keywords, top_k)
+
         kws = keywords
 
         # Highlight Contrastive Keywords in Context        

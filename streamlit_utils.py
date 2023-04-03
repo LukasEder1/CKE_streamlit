@@ -136,11 +136,29 @@ def create_ranking_df(rank):
     return pd.DataFrame({"Sentence Position": list(rank.keys()),
                         "Importance Score": list(rank.values())})
 
-def display_keywords(keywords, k):
+
+def display_keywords(keywords, former, latter, k):
     kws, scores = create_keyword_frame(keywords)
+
+    former_kws, former_scores = create_keyword_frame(former)
+    latter_kws, latter_scores = create_keyword_frame(latter)
+
+    df_former = pd.DataFrame({'keyword': former_kws, 'score': former_scores})
+    df_latter = pd.DataFrame({'keyword': latter_kws, 'score': latter_scores})
     df = pd.DataFrame({'keyword': kws, 'score': scores})
     
-    return df.head(k)
+    col_former, col_latter = st.columns(2)
+
+    with col_former:
+        st.markdown("<h3 style='text-align: center;'>Former Keywords</h3>", unsafe_allow_html=True)
+        st.table(df_former.head(k))
+
+    with col_latter:
+        st.markdown("<h3 style='text-align: center;'>Latter Keywords</h3>", unsafe_allow_html=True)
+        st.table(df_latter.head(k))
+
+    st.markdown("<h3 style='text-align: center;'>Combined Keywords</h3>", unsafe_allow_html=True)
+    st.table(df.head(k))
 
 def find_merges(matched_dict):
     merges = {}

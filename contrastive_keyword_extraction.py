@@ -34,6 +34,11 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
     # computed intermediate Keywords for contrastive KE between the current and prev Document Version    
     keywords = {}
     
+    former_keywords = {}
+
+    latter_keywords = {}
+
+
     # loop over the changed sentences
     for i in list(set(changed_indices)):
         for k in range(len(matched_dict[i])):
@@ -63,6 +68,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
 
                 # include added ngrams, scored by their frequency * score of the change 
                 keywords[ngram] = keywords.get(ngram, 0) + float(ratio * np.log(freq + 0.001) * s_c)
+                latter_keywords[ngram] = latter_keywords.get(ngram, 0) + float(ratio * np.log(freq + 0.001) * s_c)
                 
         # get frequencies of sentence in older version
         # in order to include deletions as keywords
@@ -79,7 +85,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             
             # include deleted ngrams, scored by their frequency * score of the change
             keywords[ngram] = keywords.get(ngram, 0) + float(ratio * np.log(freq + 0.001)  * s_c)
-
+            former_keywords[ngram] = former_keywords.get(ngram, 0) + float(ratio * np.log(freq + 0.001)  * s_c)
 
     # newly added sentence: ( new := has not been matched to)
     for i in new_indices:
@@ -97,6 +103,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
             
             # include added ngrams, scored by their frequency * Importance of the sentence
             keywords[ngram] = keywords.get(ngram, 0) + float(freq * latter_contrastiveness[i] * ratio)
+            latter_keywords[ngram] = latter_keywords.get(ngram, 0) + float(freq * latter_contrastiveness[i] * ratio)
             
     
     # removed sentence: ( removed := no match found)
@@ -115,16 +122,25 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
 
             # include deleted ngrams, scored by their frequency * Importance of the sentence
             keywords[ngram] = keywords.get(ngram, 0) + float(ratio * freq * former_contrastiveness[i])
+            former_keywords[ngram] = former_keywords.get(ngram, 0) + float(ratio * freq * former_contrastiveness[i])
 
     # normalize keywords
     # total "IMPORTANCE COUNT
     total_count = sum(keywords.values())
-    
+    former_count = sum(former_keywords.values())
+    latter_count = sum(latter_keywords.values())
     # sort keywords + normalize
     keywords = {k: float(v)/float(total_count)  for k, v in sorted(keywords.items(), key=lambda item: item[1], 
                                                  reverse=True)}
     
-    return keywords
+
+    former_keywords = {k: float(v)/float(former_count)  for k, v in sorted(former_keywords.items(), key=lambda item: item[1], 
+                                                 reverse=True)}
+    
+    latter_keywords = {k: float(v)/float(latter_count)  for k, v in sorted(latter_keywords.items(), key=lambda item: item[1], 
+                                                 reverse=True)}
+    
+    return keywords, former_keywords, latter_keywords
 
 
 
@@ -155,7 +171,7 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
     
 
     # extract keywords
-    keywords = final_score(documents, changed_indices, new_indices, matched_dict, 
+    keywords, former_keywords, latter_keywords = final_score(documents, changed_indices, new_indices, matched_dict, 
                                         ranking, max_ngram, additions, removed,
                                         unified_delitions, combinator, 
                                         alpha_gamma=alpha_gamma, min_ngram= min_ngram, 
@@ -163,4 +179,4 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
                                         extra_stopwords=extra_stopwords)
     
     
-    return keywords, matched_dict, changed_indices, additions, deletions, new_indices, ranking, removed, matched_indices, unified_delitions
+    return keywords, former_keywords, latter_keywords, matched_dict, changed_indices, additions, deletions, new_indices, ranking, removed, matched_indices, unified_delitions
