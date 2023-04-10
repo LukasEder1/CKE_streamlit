@@ -8,7 +8,7 @@ import nltk
 import pickle
 from streamlit_utils import *
 import utilities
-from st_on_hover_tabs import on_hover_tabs
+
 st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 
 
@@ -20,12 +20,7 @@ pd.set_option('display.max_columns', None)
 
 st.sidebar.markdown("# Advanced Settings")
 
-"""
-with st.sidebar:
-    match = st.selectbox(
-    'Matching Algorithm',
-    ('Semantic Search', 'Weighted tfidf'))
-    """
+
 
 nltk.download("punkt")
 nltk.download('stopwords')
@@ -83,22 +78,24 @@ with col2:
     later = st.text_area('Latter Version: ', documents[-1], height=400)
 
 
-
-
-
-with st.expander("Advanced Settings"):
-
+with st.sidebar:
     # How to evaluate the Importance of Sentences
     ie = st.selectbox(
     'Importance Estimator',
     ('TextRank', 'Yake Weighted Keyword Count'))
 
-    # How to match Sentences
+
     match = st.selectbox(
     'Matching Algorithm',
     ('Semantic Search', 'Weighted tfidf'))
+    
 
-    # How to combine Sentence Importance and Change Importance
+    # Lower Bound for matching sentences
+    lower_bound = st.slider("Semantic Matching Threshold", 0.0, 1.0, 0.6, help='''Acts as a lower bound 
+                            for whether or not two sentences match''')
+
+
+        # How to combine Sentence Importance and Change Importance
     # defined as phi in paper
     comb = st.selectbox(
     'Combinator of Sentence Importance and Change Importance',
@@ -117,25 +114,16 @@ with st.expander("Advanced Settings"):
     if comb == "Geometric Combination":
         param = st.slider("Gamma", 0.0, 1.0, 0.5)
 
-    # Lower Bound for matching sentences
-    lower_bound = st.slider("Semantic Matching Threshold", 0.0, 1.0, 0.6, help='''Acts as a lower bound 
-                            for whether or not two sentences match''')
 
-    # Fine Control over the use of Stopwords
-    col_stop1, col_stop2 = st.columns(2)
-    with col_stop1:
-        use_stopwords = st.selectbox(
+    use_stopwords = st.selectbox(
             'Preset Stopword Collection',
-            ('NLTK English Stopwords', 'None')
-        )
+            ('NLTK English Stopwords', 'None'))
 
-    # Include extra stopwords
-    with col_stop2:
-        extra_stopwords = st.multiselect("Remove additional stopwords",
-                                union_of_words(former, later),
-                                [])
+    extra_stopwords = st.multiselect("Remove additional stopwords",
+                        union_of_words(former, later),
+                        [])
 
-    # Display Ngrams
+       # Display Ngrams
     show_grams = st.checkbox('Show monograms in context (experimental feature)')
 
     # Display  Sentence Importances
@@ -143,6 +131,11 @@ with st.expander("Advanced Settings"):
 
     # Upper bound on the possible number of splits
     num_splits = st.number_input("Number of Splits allowed", 1, 4, 1)
+
+    st.write("")
+
+
+
 
 
 run = st.button('Compare Documents')
@@ -177,7 +170,7 @@ if run:
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added, matched_dict, deleted))#, use_container_width=True)
+        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
 
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
