@@ -8,33 +8,42 @@ import nltk
 import pickle
 from streamlit_utils import *
 import utilities
-
-# Dictonary of preset versioned Documents
-with open("docs.pkl", "rb") as file:
-    docs = pickle.load(file)
+from st_on_hover_tabs import on_hover_tabs
+st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 
 
 # BEGIN META
-st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
+
 st.header('Contrastive Keyword Extraction')
 
 pd.set_option('display.max_columns', None)
 
+st.sidebar.markdown("# Advanced Settings")
+
+"""
+with st.sidebar:
+    match = st.selectbox(
+    'Matching Algorithm',
+    ('Semantic Search', 'Weighted tfidf'))
+    """
 
 nltk.download("punkt")
 nltk.download('stopwords')
 
- 
+
+# Dictonary of preset versioned Documents
+with open("docs.pkl", "rb") as file:
+    docs = pickle.load(file)    
 article_id = st.selectbox(
     'Choose a Document or try it with your own one.',
     ("Custom", "Example 0", "Example 1", "Article 17313", 
     "Article 17748","Policy 99880", "Policy 90232", "Policy 106604",
-     "Policy 106601", "Policy 98447"), help="Examples taken from: https://privacypolicies.cs.princeton.edu/ and https://github.com/isi-nlp/NewsEdits")
+    "Policy 106601", "Policy 98447"), help="Examples taken from: https://privacypolicies.cs.princeton.edu/ and https://github.com/isi-nlp/NewsEdits")
 
 
 ies = {"TextRank":sentence_importance.text_rank_importance,
-      "Yake Weighted Keyword Count": sentence_importance.yake_weighted_importance
-      }
+    "Yake Weighted Keyword Count": sentence_importance.yake_weighted_importance
+    }
 
 
 matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_search,
@@ -42,8 +51,8 @@ matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_sea
 
 
 combinator = {"Linear Combination": utilities.alpha_combination,
-              "Geometric Combination": utilities.gamma_combination,
-              "Harmonic Mean": utilities.harmonic_mean}
+            "Geometric Combination": utilities.gamma_combination,
+            "Harmonic Mean": utilities.harmonic_mean}
 
 
 stopwords_collection = {"NLTK English Stopwords": nltk.corpus.stopwords.words("english"),
@@ -73,6 +82,10 @@ with col2:
 
     later = st.text_area('Latter Version: ', documents[-1], height=400)
 
+
+
+
+
 with st.expander("Advanced Settings"):
 
     # How to evaluate the Importance of Sentences
@@ -99,7 +112,7 @@ with st.expander("Advanced Settings"):
     param = 0.5
 
     if comb == "Linear Combination":
-       param = st.slider("Beta", 0.0, 1.0, 0.5) 
+        param = st.slider("Beta", 0.0, 1.0, 0.5) 
     
     if comb == "Geometric Combination":
         param = st.slider("Gamma", 0.0, 1.0, 0.5)
@@ -164,7 +177,7 @@ if run:
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
+        st.dataframe(changed_df(added, matched_dict, deleted))#, use_container_width=True)
 
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
