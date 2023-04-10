@@ -8,7 +8,7 @@ import nltk
 import pickle
 from streamlit_utils import *
 import utilities
-from st_on_hover_tabs import on_hover_tabs
+
 st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 
 
@@ -177,7 +177,7 @@ if run:
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added, matched_dict, deleted))#, use_container_width=True)
+        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
 
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
