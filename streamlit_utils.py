@@ -308,3 +308,8 @@ def union_of_words(former, latter):
     former = re.findall(r"[\w']+", former.lower())
     latter = re.findall(r"[\w']+", latter.lower())
     return sorted(list(set(latter).union(set(former))))
+
+
+def add_lines(n):
+    for _ in range(n):
+        st.write("")
