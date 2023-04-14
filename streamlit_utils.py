@@ -375,7 +375,7 @@ def highlight_custom_changes(former, later, changed_indices, matched_dict, new, 
 
     # annotate
     later_html = []
-    st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+    
     d = {int(i):count for count, i in enumerate(drop_dupilcates(matched_and_changed))}
 
 
