@@ -8,10 +8,65 @@ import nltk
 import pickle
 from streamlit_utils import *
 import utilities
+from TextHighlight import ContrastiveTextHighlighter
 
 st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 
+def concat(list):
+    return "\n".join(list)
 
+#         border-radius: 5px; /* this gives the rounded look */
+#        font-family: arial;
+#        font-size: 12px;
+
+def display(html):
+    result = f'''<style>
+
+    span.changed {{
+        background-color: #f2f2f2;
+        color: #000;
+        padding: 5px;
+        border-radius: 5px;
+
+    }}
+
+    span.new {{
+        background-color: #00C300;
+        color: #000;
+        padding: 5px;
+        border-radius: 5px; 
+    }}
+
+    span.removed {{
+        background-color: #E00307;
+        color: #000;
+        padding: 5px;
+        border-radius: 5px; 
+
+    }}
+
+    span.kw {{
+        padding: 2px;
+        padding-left:4px;
+        border-radius: 5px; 
+
+    }}
+
+    span.index {{
+        border-left: 1px solid black;
+        margin-left: 2px;
+        padding-left: 2px;
+        padding-right:5px;
+    }}
+
+    </style>
+ 
+    {concat([""] + html)}
+
+    '''
+
+    st.markdown(result, unsafe_allow_html=True)
+    
 # BEGIN META
 
 st.header('Contrastive Keyword Extraction')
@@ -79,6 +134,7 @@ with col2:
 
 
 with st.sidebar:
+
     # How to evaluate the Importance of Sentences
     ie = st.selectbox(
     'Importance Estimator',
@@ -124,7 +180,7 @@ with st.sidebar:
                         [])
 
        # Display Ngrams
-    show_grams = st.checkbox('Show monograms in context (experimental feature)')
+    show_grams = st.checkbox('Show Keywords in context (experimental feature)')
 
     # Display  Sentence Importances
     show_importance = st.checkbox('Show Sentence Ranking (depends on the Importance Estimator)')
@@ -170,7 +226,7 @@ if run:
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
+        st.dataframe(changed_df(added, matched_dict, deleted))#, use_container_width=True)
 
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
@@ -179,17 +235,8 @@ if run:
         kws = keywords
 
         # Highlight Contrastive Keywords in Context        
-        if show_grams:
-            st.markdown("<h1 style='text-align: center;'>Keywords in Context</h1>", unsafe_allow_html=True)
-            annotate_keywords([former, later], 
-                            {k: kws[k] for k in list(kws)[:top_k]},
-                            changed_sentences,
-                            matched_dict,
-                            new,
-                            added=added, 
-                            ngram=ngram,
-                            removed=removed,
-                            deleted=ud)
+        
+
 
         # Highlight matched/deleted/added and split sentences
         highlight_changes(former,
@@ -203,3 +250,29 @@ if run:
         # Show and Compare the most Important Sentences
         if show_importance:
             show_sentence_importances(ranking, former, later)
+
+        former_html, later_html = highlight_custom_changes(former,
+                                later,
+                                changed_sentences,
+                                matched_dict,
+                                new,
+                                removed,
+                                matched_indices,
+                                ngram,
+                                former_keywords,
+                                latter_keywords,
+                                top_k)
+        
+        if show_grams:
+            st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
+        
+            col_former, col_later = st.columns(2)
+
+            with col_former:
+                st.markdown("<h2 style='text-align: center;'>Former Document</h2>", unsafe_allow_html=True)
+
+                display(former_html)
+
+            with col_later:
+                st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+                display(later_html)

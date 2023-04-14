@@ -7,6 +7,14 @@ import pickle
 from annotated_text import annotated_text
 import pysbd
 import math
+from TextHighlight import ContrastiveTextHighlighter
+def drop_dupilcates(list):
+    result = []
+    for i in list:
+        if i not in result:
+            result.append(i)
+    
+    return result
 
 def get_ngrams_of_size_n(diff_content, ngram_size):
     return [ngram for ngram in diff_content if len(ngram.split(" ")) == ngram_size]
@@ -46,6 +54,9 @@ def create_keyword_frame(keywords):
     
     return kws, scores
 
+def enumerate_grey_sentences(matched_dict):
+    return {}
+
 def annotate_keywords(documents, intermediate_keywords, changed_indices, matched_dict, new, ngram, added, removed, deleted):
     seg = pysbd.Segmenter(language="en", clean=False)
     sentences_a = seg.segment(documents[0])
@@ -54,7 +65,6 @@ def annotate_keywords(documents, intermediate_keywords, changed_indices, matched
     words_b = [re.findall(r"[\w']+", sentences_b[i].lower())  for i in range(len(sentences_b))]
     matched_and_changed = [matched_dict[i][k][0] for i in changed_indices for k in range(len(matched_dict[i]))]
     keywords = list(intermediate_keywords.keys())
-    print("KW: ", keywords, "END")
     for i in changed_indices:
         for k in range(len(matched_dict[i])):
             matched_idx, _ = matched_dict[i][k]
@@ -229,8 +239,9 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
     for i, l in matched_dict.items():
         
         if len(l) > 1:
+
             for j, score in l:
-                if int(j) not in list(max_index.values()):
+                if int(j) not in list(max_index.values()) and score < 1:
                     splits.append(int(j))
                     #split_from.update({str(j): max_index[i]})
     
@@ -241,8 +252,25 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
     st.markdown("<h1 style='text-align: center;'>Sentence Matching Results</h1>", unsafe_allow_html=True)
 
     col_former, col_later = st.columns(2)
-
     # Matches for Document A
+
+        # Matches for Document B
+    with col_later:
+        st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+        d = {int(i):count for count, i in enumerate(drop_dupilcates(matched_and_changed))}
+
+
+
+        for i in range(len(later_sentences)):
+            if i in new:
+                annotated_text((later_sentences[i], "new", "#00e600"))
+            elif i in splits:
+                annotated_text((later_sentences[i], f"{d[nonmax_mapping[i]]} - split", "#f2f2f2"))
+            elif i in matched_and_changed:
+                annotated_text((later_sentences[i], f"{d[i]}", "#f2f2f2"))
+            else:
+                st.write(later_sentences[i])
+
     with col_former:
         st.markdown("<h2 style='text-align: center;'>Original Document</h2>", unsafe_allow_html=True)
 
@@ -257,23 +285,14 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
                 else:
                     annotated_text((former_sentences[i], f"{matched_dict[i][0][0]} - merge", "#f2f2f2"))
                 """
-                annotated_text((former_sentences[i], f"{matched_dict[i][0][0]}", "#f2f2f2"))
+                annotated_text((former_sentences[i], f"{d[int(matched_dict[i][0][0])]}", "#f2f2f2"))
+
+
+                
             else:
                 st.write(former_sentences[i])
 
-    # Matches for Document B
-    with col_later:
-        st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
 
-        for i in range(len(later_sentences)):
-            if i in new:
-                annotated_text((later_sentences[i], "new", "#00e600"))
-            elif i in splits:
-                annotated_text((later_sentences[i], f"{nonmax_mapping[i]} - split", "#f2f2f2"))
-            elif i in matched_and_changed:
-                annotated_text((later_sentences[i], f"{i}", "#f2f2f2"))
-            else:
-                st.write(later_sentences[i])
 
 
 def show_sentence_importances(ranking, former, later):
@@ -313,3 +332,82 @@ def union_of_words(former, latter):
 def add_lines(n):
     for _ in range(n):
         st.write("")
+
+def annotate_sentence(sentence, type, label):
+    return f'''<p><span class={type}>{sentence}<span class="index">{label}</span></span></p>'''
+
+
+
+def highlight_custom_changes(former, later, changed_indices, matched_dict, new, removed, matched_indices, n_gram, kw_f, kw_l, top_k):
+
+    # Setup
+    th_former = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (88,0,1), top_k=top_k)
+    th_latter = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (0, 50, 0), top_k=top_k)
+    # Find the index with the highest Semantic Similarity for all split sentences
+    max_index, nonmax_mapping = find_max_indices(matched_dict, matched_indices, changed_indices)
+    merges, maximum_merges, merges_mapping = find_merges(matched_dict)
+    seg = pysbd.Segmenter(language="en", clean=False)
+    
+    former_sentences = seg.segment(former)
+    former_sentences = [th_former.highlight(sentence, kw_f) for sentence in former_sentences]
+
+    later_sentences = seg.segment(later)
+    later_sentences = [th_latter.highlight(sentence, kw_l) for sentence in later_sentences]
+
+    # find sentences in newer version that have been matched to
+    # and where the syntatic similarity is below 1.0
+    matched_and_changed = [matched_dict[i][0][0] for i in changed_indices]
+    
+    # includes the split to sentences, without the max split sentence
+    splits = []
+
+    # find non-max split sentences
+    for i, l in matched_dict.items():
+        
+        if len(l) > 1:
+            print(i, l)
+            for j, score in l:
+                if int(j) not in list(max_index.values()) and score < 1:
+                    splits.append(int(j))
+                    #split_from.update({str(j): max_index[i]})
+    
+    nonmax_merge = list(merges_mapping.keys())
+
+    # annotate
+    later_html = []
+    st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+    d = {int(i):count for count, i in enumerate(drop_dupilcates(matched_and_changed))}
+
+
+
+    for i in range(len(later_sentences)):
+        if i in new:
+            later_html.append(annotate_sentence(later_sentences[i], "new", "NEW"))
+        elif i in splits:
+            annotated_text((later_sentences[i], f"{d[nonmax_mapping[i]]} - split", "#f2f2f2"))
+        elif i in matched_and_changed:
+            later_html.append(annotate_sentence(later_sentences[i], type="changed", label=f"{d[i]}"))
+        else:
+            later_html.append(later_sentences[i])
+
+
+    former_html = []
+    # use the annotated component to highlight text
+    for i in range(len(former_sentences)):
+        if i in removed:
+            former_html.append(annotate_sentence(former_sentences[i], "removed", "REMOVED"))
+        elif i in changed_indices:
+            """
+            if not i in nonmax_merge:
+                annotated_text((former_sentences[i], f"{matched_dict[i][0][0]}", "#f2f2f2"))
+            else:
+                annotated_text((former_sentences[i], f"{matched_dict[i][0][0]} - merge", "#f2f2f2"))
+            """
+            former_html.append(annotate_sentence(former_sentences[i], type="changed", label=f"{d[int(matched_dict[i][0][0])]}"))
+
+
+            
+        else:
+            former_html.append("<p>"+former_sentences[i]+"</p>")
+
+    return former_html, later_html
