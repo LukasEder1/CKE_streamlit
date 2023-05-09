@@ -1,6 +1,4 @@
 import re
-import matplotlib.cm as cm
-import numpy as np
 
 
 class ContrastiveTextHighlighter(object):
