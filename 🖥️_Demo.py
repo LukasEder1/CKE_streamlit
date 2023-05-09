@@ -230,7 +230,7 @@ if run:
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added, matched_dict, deleted))#, use_container_width=True)
+        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
 
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
