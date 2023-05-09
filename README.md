@@ -7,7 +7,7 @@
   <p align="center">
     This Streamlit App, implements, the Contrastive Keyword pipeline depicted below
     <br />
-    <a href="https://contrastive-keyword-extraction.streamlit.app/"><strong>View Demo »</strong></a>
+    <a href="https://lukaseder1-cke-streamlit--demo-x3psc6.streamlit.app/"><strong>View Demo »</strong></a>
     <br />
     <br />
     <br />
