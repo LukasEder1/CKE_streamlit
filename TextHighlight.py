@@ -1,4 +1,7 @@
 import re
+import matplotlib.cm as cm
+import numpy as np
+
 
 class ContrastiveTextHighlighter(object):
 
@@ -14,6 +17,7 @@ class ContrastiveTextHighlighter(object):
         self.max_ngram_size = max_ngram_size
         self.top_k = top_k
         self.r, self.g, self.b = rgb
+
 
     def highlight(self, text, keywords):
         """
@@ -42,7 +46,7 @@ class ContrastiveTextHighlighter(object):
             for tk in range(len(text_tokens)):
                 kw = re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  text_tokens[tk])
                 if kw.lower() in relevant_words_array:
-                    text_tokens[tk] = text_tokens[tk].replace(kw, f'<span style="background-color: rgb({self.r}, {self.g}, {self.b}, {0.2+round(keywords[kw], 3)});">' + kw + f"<span class='index'>{round(keywords[kw], 3)}</span></span>")
+                    text_tokens[tk] = text_tokens[tk].replace(kw, f'<span style="background-color: rgb({self.r}, {self.g}, {self.b});">' + kw + f"<span class='index'>{round(keywords[kw], 3)}</span></span>")
         except:
             pass
         new_text = ' '.join(text_tokens)
@@ -141,6 +145,6 @@ class ContrastiveTextHighlighter(object):
     def replace_token(self, text_tokens, y, n_gram_word_list, keywords):
         txt = ' '.join(text_tokens[y:y + len(n_gram_word_list[0].split(' '))])
 
-        new_expression = txt.replace(re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  txt), f'<span class="kw" style="background-color: rgb({self.r}, {self.g}, {self.b}, {0.2+round(keywords[n_gram_word_list[0].lower()], 3)});">' + n_gram_word_list[0] + f"<span class='index'>{round(keywords[n_gram_word_list[0].lower()], 3)}</span></span>")
+        new_expression = txt.replace(re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  txt), f'<span class="kw" style="background-color: rgb({self.r}, {self.g}, {self.b});">' + n_gram_word_list[0] + f"<span class='index'>{round(keywords[n_gram_word_list[0].lower()], 3)}</span></span>")
         y += len(n_gram_word_list[0].split(' '))
         return y, new_expression

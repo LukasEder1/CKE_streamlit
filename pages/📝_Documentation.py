@@ -1,8 +1,15 @@
 import streamlit as st
 from annotated_text import annotated_text
-from streamlit_utils import add_lines
+from streamlit_utils import add_lines, union_of_words
 from sentence_transformers import SentenceTransformer, util
 import pysbd
+from sentence_comparision import find_additions_deletions_max_ngram
+import nltk
+from TextHighlight import ContrastiveTextHighlighter
+
+stopwords_collection = {"NLTK English Stopwords": nltk.corpus.stopwords.words("english"),
+            "None": []}
+
 def compare_semantically(a, b, tau):
     model = SentenceTransformer('all-MiniLM-L6-v2')
 
@@ -27,11 +34,19 @@ st.markdown("# Documentation")
 st.sidebar.markdown('''
 # Documentation
 * [Sentence Matching](#sentence-matching)
-* [Section 2](#section-2)
+    * [Matches in Context](#context)
+    * [Matches and Diff Content](#diff)    
+* [Contrastive Keywords](#keywords)
+* [Sentence Importance](#importance)
+* [Combination Methods](#comb)
 ''', unsafe_allow_html=True)
 
+st.header('Sentence Matching')
 
-st.header('Matched Sentences in Context')
+
+
+st.header('Matched Sentences in Context', anchor="context")
+
 st.write('''
 This feature provides an overview of the sentence structures of the two versions and shows how they differ.
 Put differently it visualizes whether or not sentences present in the earlier version 
@@ -134,4 +149,80 @@ with colrmv_b:
 st.write("")
 st.info(""" Sentences only present in the former version are highlighted in red and
         marked using the removed token.""")
+
+
+st.markdown("<h4 style='text-align: center;'>Splits</h4>", unsafe_allow_html=True)
+
+st.markdown('''
+This section deals with sentences from the former version, that **split** into multiple ones in the
+latter version. In order to incoportate splits into the matching process, the user can select the maximum
+number of sentences a source sentence can atmost split into. This upper bound of splits can be
+set at the bottom of the advanced settings section. The following example shows the matched results
+with and without considering splits.
+''')
+
+split_former = "In this paper, we introduce TextRank - a graph-based ranking model for text processing, and show how this model can be successfully used in natural language applications."
+split_latter_a = "TextRank, a graph-based ranking system, is introduced in this paper."
+split_latter_b = "Ranking model for text processing, and demonstrate how this model can be used successfully in natural language processing applications."
+st.markdown("<h5 style='text-align: center;'>Example without Splits enabled</h5>", unsafe_allow_html=True)
+colsplit_a, colsplit_b = st.columns(2)
+
+
+with colsplit_a:
+    annotated_text((split_former, f"{0}", "#f2f2f2"))
+
+with colsplit_b:
+    annotated_text((split_latter_a, f"{0}", "#f2f2f2"))
+    annotated_text((split_latter_b, "NEW", "#00e600"))
+
+add_lines(3)
+st.markdown("<h5 style='text-align: center;'>Example with Splits enabled</h5>", unsafe_allow_html=True)
+colsplit_c, colsplit_d = st.columns(2)
+
+with colsplit_c:
+    annotated_text((split_former, f"{0}", "#f2f2f2"))
+
+with colsplit_d:
+    annotated_text((split_latter_a, f"{0}", "#f2f2f2"))
+    annotated_text((split_latter_b, f"0-split", "#f2f2f2"))
+
+
+st.header('Detect Diff Content', anchor="diff")
+
+st.markdown('''
+As soon as we have found matching sentence pairs, we would like to extract/find **additions** or
+**deletions** between the two sentences. The Algorithm used here is the **Myers Differnce Algorithm**.
+The example below can be used to extract all additions/deletions between two sentences. Furthermore
+the user can select the maximum n-gram size of these deletions/additions and a set of Stopwords.
+''')
+
+diffa, diffb = st.columns(2)
+
+
+
+with diffa:
+    dformer = st.text_area('Former Version: ', changed_a, height=120)
+
+with diffb:
+    dLatter = st.text_area('Latter Version: ', changed_b, height=120)
+
+ngram = st.slider("Max Ngram:", 1, 10, 2)
+use_stopwords = st.selectbox(
+        'Preset Stopword Collection',
+        ('NLTK English Stopwords', 'None'))
+
+extra_stopwords = st.multiselect("Remove additional stopwords",
+                    union_of_words(dformer, dLatter),
+                    [])
+
+stpw = stopwords_collection[use_stopwords] + extra_stopwords
+
+
+add, delit = find_additions_deletions_max_ngram(dformer, dLatter, ngram, [","],  stpw)
+
+with diffa:
+    st.error(f"Deletions: {delit}")
+with diffb:
+    st.success(f"Additions: {add}")
+
 

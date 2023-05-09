@@ -340,9 +340,9 @@ def annotate_sentence(sentence, type, label):
 
 def highlight_custom_changes(former, later, changed_indices, matched_dict, new, removed, matched_indices, n_gram, kw_f, kw_l, top_k):
 
-    # Setup
-    th_former = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (88,0,1), top_k=top_k)
-    th_latter = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (0, 50, 0), top_k=top_k)
+    # Setup <- Change Colour
+    th_former = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (128, 0, 0), top_k=top_k)
+    th_latter = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (0, 102, 0), top_k=top_k)
     # Find the index with the highest Semantic Similarity for all split sentences
     max_index, nonmax_mapping = find_max_indices(matched_dict, matched_indices, changed_indices)
     merges, maximum_merges, merges_mapping = find_merges(matched_dict)
@@ -360,33 +360,34 @@ def highlight_custom_changes(former, later, changed_indices, matched_dict, new, 
     
     # includes the split to sentences, without the max split sentence
     splits = []
+    max_splits = []
 
     # find non-max split sentences
     for i, l in matched_dict.items():
         
         if len(l) > 1:
-            print(i, l)
-            for j, score in l:
-                if int(j) not in list(max_index.values()) and score < 1:
-                    splits.append(int(j))
-                    #split_from.update({str(j): max_index[i]})
-    
+            max_splits.append(int(l[0][0]))
+
+    for l in matched_dict.values():
+        for i, score in l[1:]:
+            if i not in max_splits and score < 1:
+                splits.append(int(i))
+
+
     nonmax_merge = list(merges_mapping.keys())
 
     # annotate
     later_html = []
-    st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+
     d = {int(i):count for count, i in enumerate(drop_dupilcates(matched_and_changed))}
-
-
-
+    
     for i in range(len(later_sentences)):
         if i in new:
-            later_html.append(annotate_sentence(later_sentences[i], "new", "NEW"))
-        elif i in splits:
-            annotated_text((later_sentences[i], f"{d[nonmax_mapping[i]]} - split", "#f2f2f2"))
+            later_html.append(annotate_sentence(later_sentences[i], "new", "New"))
         elif i in matched_and_changed:
             later_html.append(annotate_sentence(later_sentences[i], type="changed", label=f"{d[i]}"))
+        elif i in splits:
+            later_html.append(annotate_sentence(later_sentences[i], type="changed", label=f"{d[nonmax_mapping[i]]} - split"))
         else:
             later_html.append(later_sentences[i])
 
@@ -395,7 +396,7 @@ def highlight_custom_changes(former, later, changed_indices, matched_dict, new, 
     # use the annotated component to highlight text
     for i in range(len(former_sentences)):
         if i in removed:
-            former_html.append(annotate_sentence(former_sentences[i], "removed", "REMOVED"))
+            former_html.append(annotate_sentence(former_sentences[i], "removed", "Removed"))
         elif i in changed_indices:
             """
             if not i in nonmax_merge:

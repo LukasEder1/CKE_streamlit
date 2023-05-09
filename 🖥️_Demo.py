@@ -38,7 +38,7 @@ def display(html):
     }}
 
     span.removed {{
-        background-color: #E00307;
+        background-color: #cc0000;
         color: #000;
         padding: 5px;
         border-radius: 5px; 
@@ -46,17 +46,21 @@ def display(html):
     }}
 
     span.kw {{
-        padding: 2px;
+        padding: 1px;
         padding-left:4px;
         border-radius: 5px; 
+        opacity: 1;
 
     }}
 
     span.index {{
-        border-left: 1px solid black;
+        //border-left: 1px solid black;
         margin-left: 2px;
-        padding-left: 2px;
-        padding-right:5px;
+        padding-left: 5px;
+        padding-right:3px;
+        opacity: 0.5;
+        text-align: right;
+        font-size: 0.9em;
     }}
 
     </style>
@@ -226,7 +230,7 @@ if run:
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
+        st.dataframe(changed_df(added, matched_dict, deleted))#, use_container_width=True)
 
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
@@ -270,7 +274,6 @@ if run:
 
             with col_former:
                 st.markdown("<h2 style='text-align: center;'>Former Document</h2>", unsafe_allow_html=True)
-
                 display(former_html)
 
             with col_later:
