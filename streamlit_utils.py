@@ -378,7 +378,7 @@ def highlight_custom_changes(former, later, changed_indices, matched_dict, new, 
 
     # annotate
     later_html = []
-
+    
     d = {int(i):count for count, i in enumerate(drop_dupilcates(matched_and_changed))}
     
     for i in range(len(later_sentences)):
