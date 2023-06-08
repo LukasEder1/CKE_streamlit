@@ -227,7 +227,7 @@ if run:
                                                                             top_k=int(num_splits),
                                                                             combinator=combinator[comb],
                                                                             alpha_gamma=float(param),
-                                                                            matching_model='nikcheerla/nooks-amd-detection-realtime')
+                                                                            matching_model='all-MiniLM-L6-v2')
 
         
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
