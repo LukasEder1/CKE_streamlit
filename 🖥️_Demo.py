@@ -38,7 +38,7 @@ def display(html):
     }}
 
     span.removed {{
-        background-color: #cc0000;
+        background-color: #e60000;
         color: #000;
         padding: 5px;
         border-radius: 5px; 
@@ -142,17 +142,28 @@ with st.sidebar:
     # How to evaluate the Importance of Sentences
     ie = st.selectbox(
     'Importance Estimator',
-    ('TextRank', 'Yake Weighted Keyword Count'))
+    ('TextRank', 'Yake! Weighted Keyword Count'),
+    help="""This setting deals with how sentences are ranked and consequentially how keywords in those sentences are ranked.
+        \nTextRank: Sentences are ranked based on how similiar they are to all other sentences.
+        \nYake! Weighted Keyword Count: Sentences are ranked based on the number of Keywords YAKE! found in them.
+        """)
 
 
     match = st.selectbox(
     'Matching Algorithm',
-    ('Semantic Search', 'Weighted tfidf'))
+    ('Semantic Search', 'Weighted tfidf'),
+    help="""This setting deals with how sentences between the two versions are matched, this changed the way sentences
+    are being classified, namely into new, added and changed sentences.
+    
+    \n Semantic Search: Using Sentence Transformers (all-MiniLM-L6-v2) one can find the most semantically similiar sentences
+    \n Weighted tfidf: Finding similiar sentences based on frequencies (does not match based on their semantic similarities)
+    """)
     
 
     # Lower Bound for matching sentences
     lower_bound = st.slider("Semantic Matching Threshold", 0.0, 1.0, 0.6, help='''Acts as a lower bound 
-                            for whether or not two sentences match''')
+                            on whether or not two sentences match.
+                            This setting plays a big role in the classification of sentences for the following classes: new, removed, split and unchanged''')
 
 
         # How to combine Sentence Importance and Change Importance
@@ -177,20 +188,26 @@ with st.sidebar:
 
     use_stopwords = st.selectbox(
             'Preset Stopword Collection',
-            ('NLTK English Stopwords', 'None'))
+            ('NLTK English Stopwords', 'None'),
+            help="""Preset Collection of Words that should not be considered as Keywords
+            \n NLTK English Stopwords: English Stopwords from the Natural Language Toolkit
+            \n None: Use all the words as possible Keyword Candidates""")
 
     extra_stopwords = st.multiselect("Remove additional stopwords",
                         union_of_words(former, later),
-                        [])
+                        [],
+                        help="""Words present in either one of the two documents, that should also be removed
+                        as Keyword candidates, despite only the Stopwords from the Preset Stopword Collection
+                        """)
 
        # Display Ngrams
-    show_grams = st.checkbox('Show Keywords in context (experimental feature)')
+    show_grams = st.checkbox('Show Keywords in context', help="Displays Keywords in the Context they appeared in")
 
     # Display  Sentence Importances
-    show_importance = st.checkbox('Show Sentence Ranking (depends on the Importance Estimator)')
+    show_importance = st.checkbox('Show Sentence Ranking', help="Displays the sentences in the order they got ranked and their respective importance score")
 
     # Upper bound on the possible number of splits
-    num_splits = st.number_input("Number of Splits allowed", 1, 4, 1)
+    num_splits = st.number_input("Number of Splits allowed", 1, 4, 1, help="""Upper Bound into how many sentences a sentence from the older version can split into""")
 
     st.write("")
 
