@@ -38,7 +38,7 @@ def display(html):
     }}
 
     span.removed {{
-        background-color: #cc0000;
+        background-color: #e60000;
         color: #000;
         padding: 5px;
         border-radius: 5px; 
