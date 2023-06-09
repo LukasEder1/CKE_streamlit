@@ -341,7 +341,7 @@ def annotate_sentence(sentence, type, label):
 def highlight_custom_changes(former, later, changed_indices, matched_dict, new, removed, matched_indices, n_gram, kw_f, kw_l, top_k):
 
     # Setup <- Change Colour
-    th_former = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (128, 0, 0), top_k=top_k)
+    th_former = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (204, 0, 0), top_k=top_k)
     th_latter = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (0, 102, 0), top_k=top_k)
     # Find the index with the highest Semantic Similarity for all split sentences
     max_index, nonmax_mapping = find_max_indices(matched_dict, matched_indices, changed_indices)
