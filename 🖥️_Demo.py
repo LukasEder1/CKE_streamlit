@@ -104,9 +104,9 @@ matchers = {"Semantic Search": sentence_comparision.match_sentences_semantic_sea
             "Weighted tfidf": sentence_comparision.match_sentences_tfidf_weighted}
 
 
-combinator = {"Linear Combination": utilities.alpha_combination,
-            "Geometric Combination": utilities.gamma_combination,
-            "Harmonic Mean": utilities.harmonic_mean}
+combinator = {"Harmonic Mean": utilities.harmonic_mean,
+              "Linear Combination": utilities.alpha_combination,
+            "Geometric Combination": utilities.gamma_combination}
 
 
 stopwords_collection = {"NLTK English Stopwords": nltk.corpus.stopwords.words("english"),
