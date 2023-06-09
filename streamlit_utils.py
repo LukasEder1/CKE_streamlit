@@ -160,11 +160,11 @@ def display_keywords(keywords, former, latter, k):
     col_former, col_latter = st.columns(2)
 
     with col_former:
-        st.markdown("<h3 style='text-align: center;'>Former Keywords</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>Keywords of Older Version</h3>", unsafe_allow_html=True)
         st.table(df_former.head(k))
 
     with col_latter:
-        st.markdown("<h3 style='text-align: center;'>Latter Keywords</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>Keywords of Newer Version</h3>", unsafe_allow_html=True)
         st.table(df_latter.head(k))
 
     st.markdown("<h3 style='text-align: center;'>Combined Keywords</h3>", unsafe_allow_html=True)
@@ -254,9 +254,9 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
     col_former, col_later = st.columns(2)
     # Matches for Document A
 
-        # Matches for Document B
+    # Matches for Document B
     with col_later:
-        st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>Newer Version</h2>", unsafe_allow_html=True)
         d = {int(i):count for count, i in enumerate(drop_dupilcates(matched_and_changed))}
 
 
@@ -271,8 +271,9 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
             else:
                 st.write(later_sentences[i])
 
+
     with col_former:
-        st.markdown("<h2 style='text-align: center;'>Original Document</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>Older Version</h2>", unsafe_allow_html=True)
 
         # use the annotated component to highlight text
         for i in range(len(former_sentences)):
@@ -294,7 +295,6 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 
 
 
-
 def show_sentence_importances(ranking, former, later):
 
     # Heading
@@ -311,13 +311,13 @@ def show_sentence_importances(ranking, former, later):
     ranking_latter = create_ranking_df(ranking[1])
 
     with rcol1:
-        st.markdown("<h3 style='text-align: center;'>Original Document</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>Older Version</h3>", unsafe_allow_html=True)
         st.table(ranking_earlier)
         for i in list(ranking[0].keys()):
             annotated_text((former_sentences[i], f"{round(ranking[0][i], 4)}", "#f2f2f2"))
 
     with rcol2:
-        st.markdown("<h3 style='text-align: center;'>Latter Document</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>Newer Version</h3>", unsafe_allow_html=True)
         st.table(ranking_latter)
         for i in list(ranking[1].keys()):
             annotated_text((later_sentences[i], f"{round(ranking[1][i], 4)}", "#f2f2f2"))

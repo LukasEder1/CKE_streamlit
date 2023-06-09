@@ -234,6 +234,7 @@ if run:
 
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'><b>A total of 3 sets of Keywords is displayed</b>: 2 sets of Keywords highlighting the most important keywords for their respective versions <br> Additionally a combination of the two sets of keywords is provided below.</p>", unsafe_allow_html=True)
         display_keywords(keywords, former_keywords, latter_keywords, top_k)
 
         kws = keywords
@@ -269,13 +270,20 @@ if run:
         
         if show_grams:
             st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
-        
+            st.markdown("""<p style='text-align: center;'><b>Sentences are highlighted in the following ways:</b>
+                        <br><span class= \"changed\">Changed Sentences:</span> Sentences highlighted in light grey are present in both versions, however atleast some Word/Character is different.
+                        Additionally they are indexed by a matching index on the bottom left, such that matched sentences in the  different versions can easily be found. <br>
+                        <br><span class=\"new\">Added Sentences:</span> Sentences highlighted in green indicate sentences that are only present in the newer version. <br>
+                        <br><span class=\"removed\">Removed Sentences:</span> Sentences highlighted in red indicate sentences that are only present in the older version. <br>
+                        <br><b>Unchanged Sentences:</b> Sentences that are present in the same way in both versions are displayed without any highlighting.
+                        </p>""", unsafe_allow_html=True)
+
             col_former, col_later = st.columns(2)
 
             with col_former:
-                st.markdown("<h2 style='text-align: center;'>Former Document</h2>", unsafe_allow_html=True)
+                st.markdown("<h3 style='text-align: center;'>Older Version</h3>", unsafe_allow_html=True)
                 display(former_html)
 
             with col_later:
-                st.markdown("<h2 style='text-align: center;'>Latter Document</h2>", unsafe_allow_html=True)
+                st.markdown("<h3 style='text-align: center;'>Newer Version</h3>", unsafe_allow_html=True)
                 display(later_html)
