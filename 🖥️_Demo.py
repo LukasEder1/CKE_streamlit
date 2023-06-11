@@ -12,6 +12,7 @@ from TextHighlight import ContrastiveTextHighlighter
 
 st.set_page_config(page_title="CKE", page_icon=":shark:", layout="wide")
 
+
 def concat(list):
     return "\n".join(list)
 
@@ -168,22 +169,22 @@ with st.sidebar:
 
         # How to combine Sentence Importance and Change Importance
     # defined as phi in paper
-    comb = st.selectbox(
-    'Combinator of Sentence Importance and Change Importance',
-    ('Linear Combination', 'Geometric Combination', 'Harmonic Mean'),
-    help='''Determines how the importance of a sentence in the original document gets combined with
-        the importance of the change between this sentence and its matched counterpart. 
-        ''')
+    #comb = st.selectbox(
+   # 'Combinator of Sentence Importance and Change Importance',
+    #('Linear Combination', 'Geometric Combination', 'Harmonic Mean'),
+    #help='''Determines how the importance of a sentence in the original document gets combined with
+    #    the importance of the change between this sentence and its matched counterpart. 
+    #    ''')
 
 
     # Corresponding Parameter
-    param = 0.5
+    #param = 0.5
 
-    if comb == "Linear Combination":
-        param = st.slider("Beta", 0.0, 1.0, 0.5) 
+    #if comb == "Linear Combination":
+    #    param = st.slider("Beta", 0.0, 1.0, 0.5) 
     
-    if comb == "Geometric Combination":
-        param = st.slider("Gamma", 0.0, 1.0, 0.5)
+    #if comb == "Geometric Combination":
+    #    param = st.slider("Gamma", 0.0, 1.0, 0.5)
 
 
     use_stopwords = st.selectbox(
@@ -201,7 +202,7 @@ with st.sidebar:
                         """)
 
        # Display Ngrams
-    show_grams = st.checkbox('Show Keywords in context', help="Displays Keywords in the Context they appeared in")
+   
 
     # Display  Sentence Importances
     show_importance = st.checkbox('Show Sentence Ranking', help="Displays the sentences in the order they got ranked and their respective importance score")
@@ -214,7 +215,7 @@ with st.sidebar:
 
 
 
-
+show_grams = st.checkbox('Show Keywords in context', help="Displays Keywords in the Context they appeared in")
 run = st.button('Compare Documents')
 
 
@@ -242,14 +243,11 @@ if run:
                                                                             threshold=lower_bound,
                                                                             extra_stopwords=sw,
                                                                             top_k=int(num_splits),
-                                                                            combinator=combinator[comb],
-                                                                            alpha_gamma=float(param),
+                                                                            combinator=utilities.alpha_combination,
+                                                                            alpha_gamma=0.5,
                                                                             matching_model='all-MiniLM-L6-v2')
 
         
-        st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
-
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center;'><b>A total of 3 sets of Keywords is displayed</b>: 2 sets of Keywords highlighting the most important keywords for their respective versions <br> Additionally a combination of the two sets of keywords is provided below.</p>", unsafe_allow_html=True)
@@ -260,48 +258,59 @@ if run:
         # Highlight Contrastive Keywords in Context        
         
 
+        former_html, later_html = highlight_custom_changes(former,
+                    later,
+                    changed_sentences,
+                    matched_dict,
+                    new,
+                    removed,
+                    matched_indices,
+                    ngram,
+                    former_keywords,
+                    latter_keywords,
+                    top_k,
+                    highlight_kws=show_grams)
+                
+        st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
+        st.markdown("""<p style='text-align: left;'><b>Sentences are highlighted in the following ways:</b>
+                    <br><span class= \"changed\">Changed Sentences:</span> Sentences highlighted in light grey are present in both versions, however atleast some Word/Character is different.
+                    Additionally they are indexed by a matching index on the bottom left, such that matched sentences in the  different versions can easily be found. <br>
+                    <br><span class=\"new\">Added Sentences:</span> Sentences highlighted in green indicate sentences that are only present in the newer version. <br>
+                    <br><span class=\"removed\">Removed Sentences:</span> Sentences highlighted in red indicate sentences that are only present in the older version. <br>
+                    <br><b>Unchanged Sentences:</b> Sentences that are present in the same way in both versions are displayed without any highlighting.
+                    </p>""", unsafe_allow_html=True)
 
-        # Highlight matched/deleted/added and split sentences
-        highlight_changes(former,
-                                later,
-                                changed_sentences,
-                                matched_dict,
-                                new,
-                                removed,
-                                matched_indices)
+        col_former, col_later = st.columns(2)
+
+        with col_former:
+            st.markdown("<h3 style='text-align: center;'>Older Version</h3>", unsafe_allow_html=True)
+            display(former_html)
+
+        with col_later:
+            st.markdown("<h3 style='text-align: center;'>Newer Version</h3>", unsafe_allow_html=True)
+            display(later_html)
+
+
+
+        st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
+        st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
+
+
 
         # Show and Compare the most Important Sentences
         if show_importance:
-            show_sentence_importances(ranking, former, later)
+            # Heading
+            st.markdown("<h1 style='text-align: center;'>Sentence Importance Calculation</h1>", unsafe_allow_html=True)
+            ranking_earlier, ranking_latter, former_imp, latter_imp = show_sentence_importances(ranking, former, later)
 
-        former_html, later_html = highlight_custom_changes(former,
-                                later,
-                                changed_sentences,
-                                matched_dict,
-                                new,
-                                removed,
-                                matched_indices,
-                                ngram,
-                                former_keywords,
-                                latter_keywords,
-                                top_k)
-        
-        if show_grams:
-            st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
-            st.markdown("""<p style='text-align: center;'><b>Sentences are highlighted in the following ways:</b>
-                        <br><span class= \"changed\">Changed Sentences:</span> Sentences highlighted in light grey are present in both versions, however atleast some Word/Character is different.
-                        Additionally they are indexed by a matching index on the bottom left, such that matched sentences in the  different versions can easily be found. <br>
-                        <br><span class=\"new\">Added Sentences:</span> Sentences highlighted in green indicate sentences that are only present in the newer version. <br>
-                        <br><span class=\"removed\">Removed Sentences:</span> Sentences highlighted in red indicate sentences that are only present in the older version. <br>
-                        <br><b>Unchanged Sentences:</b> Sentences that are present in the same way in both versions are displayed without any highlighting.
-                        </p>""", unsafe_allow_html=True)
+            rcol1, rcol2 = st.columns(2)
 
-            col_former, col_later = st.columns(2)
-
-            with col_former:
+            with rcol1:
                 st.markdown("<h3 style='text-align: center;'>Older Version</h3>", unsafe_allow_html=True)
-                display(former_html)
+                st.table(ranking_earlier)
+                display(former_imp)
 
-            with col_later:
+            with rcol2:
                 st.markdown("<h3 style='text-align: center;'>Newer Version</h3>", unsafe_allow_html=True)
-                display(later_html)
+                st.table(ranking_latter)
+                display(latter_imp)

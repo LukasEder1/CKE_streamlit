@@ -297,31 +297,27 @@ def highlight_changes(former, later, changed_indices, matched_dict, new, removed
 
 def show_sentence_importances(ranking, former, later):
 
-    # Heading
-    st.markdown("<h1 style='text-align: center;'>Sentence Importance Calculation</h1>", unsafe_allow_html=True)
-    
     # Sentence Boundary Detecton (Tokenization)
     seg = pysbd.Segmenter(language="en", clean=False)
     former_sentences = seg.segment(former)
 
     later_sentences = seg.segment(later)
 
-    rcol1, rcol2 = st.columns(2)
+    
     ranking_earlier = create_ranking_df(ranking[0])
     ranking_latter = create_ranking_df(ranking[1])
 
-    with rcol1:
-        st.markdown("<h3 style='text-align: center;'>Older Version</h3>", unsafe_allow_html=True)
-        st.table(ranking_earlier)
-        for i in list(ranking[0].keys()):
-            annotated_text((former_sentences[i], f"{round(ranking[0][i], 4)}", "#f2f2f2"))
+    former_html = []
+    latter_html = []
+    
+    for i in list(ranking[0].keys()):
+        former_html.append(annotate_sentence(former_sentences[i], type="changed", label=f"Index: {i}  Importance: {round(ranking[0][i], 4)}"))
 
-    with rcol2:
-        st.markdown("<h3 style='text-align: center;'>Newer Version</h3>", unsafe_allow_html=True)
-        st.table(ranking_latter)
-        for i in list(ranking[1].keys()):
-            annotated_text((later_sentences[i], f"{round(ranking[1][i], 4)}", "#f2f2f2"))
+ 
+    for i in list(ranking[1].keys()):
+        latter_html.append(annotate_sentence(later_sentences[i], type="changed", label=f"Index: {i}  Importance: {round(ranking[1][i], 4)}"))
 
+    return ranking_earlier, ranking_latter, former_html, latter_html
 
 def union_of_words(former, latter):
     former = re.findall(r"[\w']+", former.lower())
@@ -338,21 +334,25 @@ def annotate_sentence(sentence, type, label):
 
 
 
-def highlight_custom_changes(former, later, changed_indices, matched_dict, new, removed, matched_indices, n_gram, kw_f, kw_l, top_k):
+def highlight_custom_changes(former, later, changed_indices, matched_dict, new, removed, matched_indices, n_gram, kw_f, kw_l, top_k, highlight_kws=True):
 
     # Setup <- Change Colour
-    th_former = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (204, 0, 0), top_k=top_k)
-    th_latter = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (0, 102, 0), top_k=top_k)
+
     # Find the index with the highest Semantic Similarity for all split sentences
     max_index, nonmax_mapping = find_max_indices(matched_dict, matched_indices, changed_indices)
     merges, maximum_merges, merges_mapping = find_merges(matched_dict)
     seg = pysbd.Segmenter(language="en", clean=False)
     
+    if highlight_kws:
+        th_former = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (204, 0, 0), top_k=top_k)
+        th_latter = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (0, 102, 0), top_k=top_k)
     former_sentences = seg.segment(former)
-    former_sentences = [th_former.highlight(sentence, kw_f) for sentence in former_sentences]
+    if highlight_kws:
+        former_sentences = [th_former.highlight(sentence, kw_f) for sentence in former_sentences]
 
     later_sentences = seg.segment(later)
-    later_sentences = [th_latter.highlight(sentence, kw_l) for sentence in later_sentences]
+    if highlight_kws:
+        later_sentences = [th_latter.highlight(sentence, kw_l) for sentence in later_sentences]
 
     # find sentences in newer version that have been matched to
     # and where the syntatic similarity is below 1.0
@@ -412,3 +412,5 @@ def highlight_custom_changes(former, later, changed_indices, matched_dict, new, 
             former_html.append("<p>"+former_sentences[i]+"</p>")
 
     return former_html, later_html
+
+

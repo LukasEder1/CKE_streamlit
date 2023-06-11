@@ -233,3 +233,7 @@ def gamma_combination(I_c, I_s, gamma=0.5):
 def harmonic_mean(I_c, I_s, gamma):
     return (2 * I_c * I_s) / (I_c + I_s)
 
+def normalize_list(lst):
+    total_sum = sum(lst)
+    normalized_values = [value / total_sum for value in lst]
+    return normalized_values

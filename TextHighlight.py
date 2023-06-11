@@ -1,5 +1,6 @@
 import re
-
+import matplotlib.cm as cm
+from utilities import normalize_list
 
 class ContrastiveTextHighlighter(object):
 
@@ -15,7 +16,7 @@ class ContrastiveTextHighlighter(object):
         self.max_ngram_size = max_ngram_size
         self.top_k = top_k
         self.r, self.g, self.b = rgb
-
+        self.coloured_kws = []
 
     def highlight(self, text, keywords):
         """
@@ -28,6 +29,10 @@ class ContrastiveTextHighlighter(object):
         if(len(keywords) > 0):
 
             kw_list = list(keywords.keys())[:self.top_k]
+            score_list = normalize_list(list(keywords.values())[:self.top_k])
+            cmap = cm.get_cmap('Pastel1')
+
+            self.coloured_kws = {kw:255*colouring for kw, colouring in zip(kw_list, cmap(score_list))}
 
             text = text.strip()
             if self.max_ngram_size == 1:
@@ -40,11 +45,15 @@ class ContrastiveTextHighlighter(object):
     def format_one_gram_text(self, text, relevant_words_array, keywords):
         text_tokens = text.replace('\n',' ').split(' ')
         relevant_words_array = [kw.lower() for kw in relevant_words_array]
+        
         try:
             for tk in range(len(text_tokens)):
                 kw = re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  text_tokens[tk])
                 if kw.lower() in relevant_words_array:
-                    text_tokens[tk] = text_tokens[tk].replace(kw, f'<span style="background-color: rgb({self.r}, {self.g}, {self.b});">' + kw + f"<span class='index'>{round(keywords[kw], 3)}</span></span>")
+                    r,g,b,_ = self.coloured_kws[kw.lower()]
+
+                    ContrastiveTextHighlighter.current_kw += 1
+                    text_tokens[tk] = text_tokens[tk].replace(kw, f'<span style="background-color: rgb({r}, {g}, {b});">' + kw + f"<span class='index'>{round(keywords[kw], 3)}</span></span>")
         except:
             pass
         new_text = ' '.join(text_tokens)
@@ -143,6 +152,8 @@ class ContrastiveTextHighlighter(object):
     def replace_token(self, text_tokens, y, n_gram_word_list, keywords):
         txt = ' '.join(text_tokens[y:y + len(n_gram_word_list[0].split(' '))])
 
-        new_expression = txt.replace(re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  txt), f'<span class="kw" style="background-color: rgb({self.r}, {self.g}, {self.b});">' + n_gram_word_list[0] + f"<span class='index'>{round(keywords[n_gram_word_list[0].lower()], 3)}</span></span>")
+        r,g,b,_ = self.coloured_kws[n_gram_word_list[0].lower()]
+
+        new_expression = txt.replace(re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  txt), f'<span class="kw" style="background-color: rgb({r}, {g}, {b});">' + n_gram_word_list[0] + f"<span class='index'>{round(keywords[n_gram_word_list[0].lower()], 3)}</span></span>")
         y += len(n_gram_word_list[0].split(' '))
         return y, new_expression
