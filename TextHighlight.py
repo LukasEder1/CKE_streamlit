@@ -1,6 +1,6 @@
 import re
 import matplotlib.cm as cm
-from utilities import normalize_list
+from utilities import normalize_list, remove_punctuation
 
 class ContrastiveTextHighlighter(object):
 
@@ -48,7 +48,7 @@ class ContrastiveTextHighlighter(object):
         
         try:
             for tk in range(len(text_tokens)):
-                kw = re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  text_tokens[tk])
+                kw = remove_punctuation(re.sub('[!",:.;?()]$|^[!",:.;?()]|\W["!,:.;?()]', '',  text_tokens[tk]))
                 if kw.lower() in relevant_words_array:
                     r,g,b,_ = self.coloured_kws[kw.lower()]
 
@@ -133,7 +133,7 @@ class ContrastiveTextHighlighter(object):
         for i in range(n_gram):
 
             temporary_list.append(text_tokens[y:y + i + 1])
-            k = re.sub('''[!",:.;?()]$|^[!",':.;?()]|\W["!,:.;?()]''', '',  ' '.join(temporary_list[i]))
+            k = remove_punctuation(re.sub('''[!",:.;?()]$|^[!",':.;?()]|\W["!,:.;?()]''', '',  ' '.join(temporary_list[i])))
 
             if k.lower() in relevant_words_array:
                 temporary_list_two.append(k)
