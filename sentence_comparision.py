@@ -288,7 +288,7 @@ def unified_diffs(siblings):
     return unified_content
 
 
-def detect_changes(matched_dict, document_a, document_b, important_indices, max_ngram,top_k=1, show_output=False,       
+def detect_changes(matched_dict, document_a, document_b, max_ngram,top_k=1, show_output=False,       
                    symbols_to_remove=[","], extra_stopwords=[]):
     
     seg = pysbd.Segmenter(language="en", clean=False)

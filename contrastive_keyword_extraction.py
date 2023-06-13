@@ -147,7 +147,7 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
 def contrastive_extraction(documents, max_ngram, min_ngram=1, 
                            importance_estimator= sentence_importance.text_rank_importance,
                            combinator=utilities.alpha_combination, threshold=0.6, top_k=1, alpha_gamma=0.5, 
-                           matching_model='all-MiniLM-L6-v2', w0 = 3, w1 = 1, w2 = 1, 
+                           matching_model='all-MiniLM-L6-v2', 
                            match_sentences =match_sentences_semantic_search, show_changes=False,
                            symbols_to_remove=[","], extra_stopwords=[]):
     
@@ -164,7 +164,7 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
     # determine WHAT has changed
     # Using Myers algorithm
     changed_indices, new_indices, additions, deletions, matched_indices, unified_delitions = detect_changes(matched_dict, documents[0], documents[-1], 
-                                        important_indices=[], max_ngram=max_ngram, show_output=show_changes,
+                                        max_ngram=max_ngram, show_output=show_changes,
                                         symbols_to_remove=symbols_to_remove, top_k=top_k,
                                         extra_stopwords=extra_stopwords)
     
@@ -180,3 +180,5 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
     
     
     return keywords, former_keywords, latter_keywords, matched_dict, changed_indices, additions, deletions, new_indices, ranking, removed, matched_indices, unified_delitions
+
+
