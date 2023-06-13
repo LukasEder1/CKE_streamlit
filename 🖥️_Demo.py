@@ -127,7 +127,7 @@ with col1:
     # Ngram Size of the Keywords
     ngram = st.slider("Max Ngram:", 1, 10, 2)
     
-    former = st.text_area('Original Version: ', documents[0], height=400)
+    former = st.text_area('Older Version: ', documents[0], height=400)
     
 
 with col2:
@@ -135,7 +135,7 @@ with col2:
     # The best k Keywords
     top_k = st.slider("Top-k Keywords:", 5, 30, 10)
 
-    later = st.text_area('Latter Version: ', documents[-1], height=400)
+    later = st.text_area('Newer Version: ', documents[-1], height=400)
 
 
 with st.sidebar:
@@ -153,18 +153,18 @@ with st.sidebar:
     match = st.selectbox(
     'Matching Algorithm',
     ('Semantic Search', 'Weighted tfidf'),
-    help="""This setting deals with how sentences between the two versions are matched, this changed the way sentences
-    are being classified, namely into new, added and changed sentences.
+    help="""This setting deals with how sentences between the two versions are being matched.
+    Which may lead to different classification result of new, added and changed sentences.
     
-    \n Semantic Search: Using Sentence Transformers (all-MiniLM-L6-v2) one can find the most semantically similiar sentences
-    \n Weighted tfidf: Finding similiar sentences based on frequencies (does not match based on their semantic similarities)
+    \n Semantic Search: Using Sentence Transformers (all-MiniLM-L6-v2) one can find the most semantically similiar sentences - Sentence Embeddings
+    \n Weighted tfidf: Finding similiar sentences based on frequencies (does not match based on their semantic similarities) - Tfidf Matrices
     """)
     
 
     # Lower Bound for matching sentences
     lower_bound = st.slider("Semantic Matching Threshold", 0.0, 1.0, 0.6, help='''Acts as a lower bound 
                             on whether or not two sentences match.
-                            This setting plays a big role in the classification of sentences for the following classes: new, removed, split and unchanged''')
+                            This setting plays a big role in the classification of sentences for the following classes: new, removed, split and changed''')
 
 
         # How to combine Sentence Importance and Change Importance
@@ -190,22 +190,22 @@ with st.sidebar:
     use_stopwords = st.selectbox(
             'Preset Stopword Collection',
             ('NLTK English Stopwords', 'None'),
-            help="""Preset Collection of Words that should not be considered as Keywords
+            help="""Preset Collections of Words that should not be considered as Keywords:
             \n NLTK English Stopwords: English Stopwords from the Natural Language Toolkit
             \n None: Use all the words as possible Keyword Candidates""")
 
     extra_stopwords = st.multiselect("Remove additional stopwords",
                         union_of_words(former, later),
                         [],
-                        help="""Words present in either one of the two documents, that should also be removed
-                        as Keyword candidates, despite only the Stopwords from the Preset Stopword Collection
+                        help="""Additional set of words present in either one of the two documents that should be excluded
+                        as Keyword candidates (Words are only selectable if the input areas are non-empty)
                         """)
 
        # Display Ngrams
    
 
     # Display  Sentence Importances
-    show_importance = st.checkbox('Show Sentence Ranking', help="Displays the sentences in the order they got ranked and their respective importance score")
+    show_importance = st.checkbox('Show Sentence Ranking', help="Displays for each version the position and score of the most important sentences. (In Descending Order)")
 
     # Upper bound on the possible number of splits
     num_splits = st.number_input("Number of Splits allowed", 1, 4, 1, help="""Upper Bound into how many sentences a sentence from the older version can split into""")
@@ -215,7 +215,7 @@ with st.sidebar:
 
 
 
-show_grams = st.checkbox('Show Keywords in context', help="Displays Keywords in the Context they appeared in")
+show_grams = st.checkbox('Show Keywords in context',value=True,help="Displays Keywords in the Context they appeared in")
 run = st.button('Compare Documents')
 
 
@@ -250,7 +250,7 @@ if run:
         
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'><b>A total of 3 sets of Keywords is displayed</b>: 2 sets of Keywords highlighting the most important keywords for their respective versions <br> Additionally a combination of the two sets of keywords is provided below.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; font-size:1.3vw;'><b>A total of 3 sets of Keywords is displayed</b>:<br> 2 sets of Keywords highlighting the most important keywords for their respective versions <br> Additionally a combination of the two sets of keywords is provided below.</p>", unsafe_allow_html=True)
         display_keywords(keywords, former_keywords, latter_keywords, top_k)
 
         kws = keywords
@@ -272,7 +272,7 @@ if run:
                     highlight_kws=show_grams)
                 
         st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
-        st.markdown("""<p style='text-align: left;'><b>Sentences are highlighted in the following ways:</b>
+        st.markdown("""<p style='text-align: left; font-size:1.3vw;'><b>Sentences are highlighted in the following ways:</b>
                     <br><span class= \"changed\">Changed Sentences:</span> Sentences highlighted in light grey are present in both versions, however atleast some Word/Character is different.
                     Additionally they are indexed by a matching index on the bottom left, such that matched sentences in the  different versions can easily be found. <br>
                     <br><span class=\"new\">Added Sentences:</span> Sentences highlighted in green indicate sentences that are only present in the newer version. <br>
@@ -293,6 +293,13 @@ if run:
 
 
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
+        st.markdown("""<p style='text-align: center; font-size:1.3vw;'><b style=font-size:1.4vw;'>The following table contains results about all matched sentences - It includes the following columns:</b>
+                    <br><b>Original Sentence Position:</b> Relative Index of the Sentence in the older version that to matched to a sentence in the newer version.
+                    <br><b>Matched Sentence Position:</b> Relative Index of the Sentence in the newer version that was matched to by a sentence in the older version.
+                    <br><b>Semantic Similarity:</b> The semantic similarity of the matched sentence pair.
+                    <br><b>Added:</b> All phrases that are present in the latter sentence, but not the former
+                    <br><b>Deleted:</b> All phrases that are present in the former sentence, but not the latter
+                    </p>""", unsafe_allow_html=True)
         st.dataframe(changed_df(added, matched_dict, deleted), use_container_width=True)
 
 
