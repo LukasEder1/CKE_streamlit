@@ -97,7 +97,7 @@ article_id = st.selectbox(
 
 
 ies = {"TextRank":sentence_importance.text_rank_importance,
-    "Yake Weighted Keyword Count": sentence_importance.yake_weighted_importance
+    "Yake! Weighted Keyword Count": sentence_importance.yake_weighted_importance
     }
 
 
