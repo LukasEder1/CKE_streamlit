@@ -293,7 +293,7 @@ if run:
 
 
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.markdown("""<p style='text-align: center; font-size:1.3vw;'><b style=font-size:1.4vw;'>The following table contains results about all matched sentences - It includes the following columns:</b>
+        st.markdown("""<p style='text-align: center;'><b style=font-size:1.4vw;'>The following table contains results about all matched sentences - It includes the following columns:</b>
                     <br><b>Original Sentence Position:</b> Relative Index of the Sentence in the older version that to matched to a sentence in the newer version.
                     <br><b>Matched Sentence Position:</b> Relative Index of the Sentence in the newer version that was matched to by a sentence in the older version.
                     <br><b>Semantic Similarity:</b> The semantic similarity of the matched sentence pair.
