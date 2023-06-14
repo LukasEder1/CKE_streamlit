@@ -272,7 +272,7 @@ if run:
                     highlight_kws=show_grams)
                 
         st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
-        st.markdown("""<p style='text-align: left; font-size:1.3vw;'><b>Sentences are highlighted in the following ways:</b>
+        st.markdown("""<p style='text-align: left;'><b>Sentences are highlighted in the following ways:</b>
                     <br><span class= \"changed\">Changed Sentences:</span> Sentences highlighted in light grey are present in both versions, however atleast some Word/Character is different.
                     Additionally they are indexed by a matching index on the bottom left, such that matched sentences in the  different versions can easily be found. <br>
                     <br><span class=\"new\">Added Sentences:</span> Sentences highlighted in green indicate sentences that are only present in the newer version. <br>
