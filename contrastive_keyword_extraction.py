@@ -10,7 +10,7 @@ from utilities import *
 import numpy as np
 
 def final_score(documents, changed_indices, new_indices, matched_dict, ranking, max_ngram,
-                additions, removed_indices, deleted, combinator=utilities.alpha_combination, 
+                additions, removed_indices, deleted, combinator=alpha_combination, 
                 top_k=0, alpha_gamma=0.5, min_ngram = 1,
                 symbols_to_remove=string.punctuation, extra_stopwords=[], num_keywords=10):
     
