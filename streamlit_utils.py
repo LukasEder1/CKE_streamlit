@@ -348,11 +348,13 @@ def highlight_custom_changes(former, later, changed_indices, matched_dict, new, 
         th_latter = ContrastiveTextHighlighter(max_ngram_size = n_gram, rgb= (0, 102, 0), top_k=top_k)
     former_sentences = seg.segment(former)
     if highlight_kws:
-        former_sentences = [th_former.highlight(sentence, kw_f) for sentence in former_sentences]
+        if len(kw_f) > 0:
+            former_sentences = [th_former.highlight(sentence, kw_f) for sentence in former_sentences]
 
     later_sentences = seg.segment(later)
     if highlight_kws:
-        later_sentences = [th_latter.highlight(sentence, kw_l) for sentence in later_sentences]
+        if len(kw_l) > 0:
+            later_sentences = [th_latter.highlight(sentence, kw_l) for sentence in later_sentences]
 
     # find sentences in newer version that have been matched to
     # and where the syntatic similarity is below 1.0
