@@ -237,3 +237,12 @@ def normalize_list(lst):
     total_sum = sum(lst)
     normalized_values = [value / total_sum for value in lst]
     return normalized_values
+
+def normalize_keywords(keywords, k):
+    keywords = dict(Counter(keywords).most_common(k))
+    
+    total_count = sum(keywords.values())
+
+    keywords = {k: float(v)/float(total_count)  for k, v in keywords.items()}
+
+    return keywords

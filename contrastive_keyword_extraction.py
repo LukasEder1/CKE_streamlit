@@ -12,7 +12,7 @@ import numpy as np
 def final_score(documents, changed_indices, new_indices, matched_dict, ranking, max_ngram,
                 additions, removed_indices, deleted, combinator=utilities.alpha_combination, 
                 top_k=0, alpha_gamma=0.5, min_ngram = 1,
-                symbols_to_remove=string.punctuation, extra_stopwords=[]):
+                symbols_to_remove=string.punctuation, extra_stopwords=[], num_keywords=10):
     
     # init Sentence Boundary Detector
     seg = pysbd.Segmenter(language="en", clean=False)
@@ -126,19 +126,25 @@ def final_score(documents, changed_indices, new_indices, matched_dict, ranking, 
 
     # normalize keywords
     # total "IMPORTANCE COUNT
-    total_count = sum(keywords.values())
-    former_count = sum(former_keywords.values())
-    latter_count = sum(latter_keywords.values())
-    # sort keywords + normalize
-    keywords = {k: float(v)/float(total_count)  for k, v in sorted(keywords.items(), key=lambda item: item[1], 
+
+    keywords = {k: float(v)  for k, v in sorted(keywords.items(), key=lambda item: item[1], 
                                                  reverse=True)}
     
 
-    former_keywords = {k: float(v)/float(former_count)  for k, v in sorted(former_keywords.items(), key=lambda item: item[1], 
+    former_keywords = {k: float(v)  for k, v in sorted(former_keywords.items(), key=lambda item: item[1], 
                                                  reverse=True)}
     
-    latter_keywords = {k: float(v)/float(latter_count)  for k, v in sorted(latter_keywords.items(), key=lambda item: item[1], 
+    latter_keywords = {k: float(v)  for k, v in sorted(latter_keywords.items(), key=lambda item: item[1], 
                                                  reverse=True)}
+
+
+    # sort keywords + normalize
+    keywords = normalize_keywords(keywords, num_keywords)
+
+
+    former_keywords = normalize_keywords(former_keywords, num_keywords)
+    
+    latter_keywords = normalize_keywords(latter_keywords, num_keywords)
     
     return keywords, former_keywords, latter_keywords
 
@@ -149,7 +155,7 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
                            combinator=utilities.alpha_combination, threshold=0.6, top_k=1, alpha_gamma=0.5, 
                            matching_model='all-MiniLM-L6-v2', 
                            match_sentences =match_sentences_semantic_search, show_changes=False,
-                           symbols_to_remove=[","], extra_stopwords=[]):
+                           symbols_to_remove=[","], extra_stopwords=[], num_keywords=10):
     
     
     # rank all sentences in their respective version
@@ -176,7 +182,8 @@ def contrastive_extraction(documents, max_ngram, min_ngram=1,
                                         unified_delitions, combinator, 
                                         alpha_gamma=alpha_gamma, min_ngram= min_ngram, 
                                         symbols_to_remove=symbols_to_remove,
-                                        extra_stopwords=extra_stopwords)
+                                        extra_stopwords=extra_stopwords,
+                                        num_keywords=num_keywords)
     
     
     return keywords, former_keywords, latter_keywords, matched_dict, changed_indices, additions, deletions, new_indices, ranking, removed, matched_indices, unified_delitions

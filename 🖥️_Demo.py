@@ -133,7 +133,7 @@ with col1:
 with col2:
     
     # The best k Keywords
-    top_k = st.slider("Top-k Keywords:", 5, 30, 10)
+    num_keywords = st.slider("Top-k Keywords:", 5, 30, 10)
 
     later = st.text_area('Newer Version: ', documents[-1], height=400)
 
@@ -245,13 +245,14 @@ if run:
                                                                             top_k=int(num_splits),
                                                                             combinator=utilities.alpha_combination,
                                                                             alpha_gamma=0.5,
-                                                                            matching_model='all-MiniLM-L6-v2')
+                                                                            matching_model='all-MiniLM-L6-v2',
+                                                                            num_keywords=num_keywords)
 
         
 
         st.markdown("<h1 style='text-align: center;'>Contrastive Keywords</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; font-size:1.3vw;'><b>A total of 3 sets of Keywords is displayed</b>:<br> 2 sets of Keywords highlighting the most important keywords for their respective versions <br> Additionally a combination of the two sets of keywords is provided below.</p>", unsafe_allow_html=True)
-        display_keywords(keywords, former_keywords, latter_keywords, top_k)
+        display_keywords(keywords, former_keywords, latter_keywords, num_keywords)
 
         kws = keywords
 
@@ -268,7 +269,7 @@ if run:
                     ngram,
                     former_keywords,
                     latter_keywords,
-                    top_k,
+                    num_keywords,
                     highlight_kws=show_grams)
                 
         st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
