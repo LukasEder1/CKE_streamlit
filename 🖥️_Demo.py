@@ -97,7 +97,7 @@ article_id = st.selectbox(
 
 
 ies = {"TextRank":sentence_importance.text_rank_importance,
-    "Yake Weighted Keyword Count": sentence_importance.yake_weighted_importance
+    "Yake! Weighted Keyword Count": sentence_importance.yake_weighted_importance
     }
 
 
@@ -272,7 +272,7 @@ if run:
                     highlight_kws=show_grams)
                 
         st.markdown("<h1 style='text-align: center;'>Keywords In Context</h1>", unsafe_allow_html=True)
-        st.markdown("""<p style='text-align: left; font-size:1.3vw;'><b>Sentences are highlighted in the following ways:</b>
+        st.markdown("""<p style='text-align: left;'><b>Sentences are highlighted in the following ways:</b>
                     <br><span class= \"changed\">Changed Sentences:</span> Sentences highlighted in light grey are present in both versions, however atleast some Word/Character is different.
                     Additionally they are indexed by a matching index on the bottom left, such that matched sentences in the  different versions can easily be found. <br>
                     <br><span class=\"new\">Added Sentences:</span> Sentences highlighted in green indicate sentences that are only present in the newer version. <br>
@@ -293,7 +293,7 @@ if run:
 
 
         st.markdown("<h1 style='text-align: center;'>Diff-Content and Matched Sentences</h1>", unsafe_allow_html=True)
-        st.markdown("""<p style='text-align: center; font-size:1.3vw;'><b style=font-size:1.4vw;'>The following table contains results about all matched sentences - It includes the following columns:</b>
+        st.markdown("""<p style='text-align: center;'><b style=font-size:1.4vw;'>The following table contains results about all matched sentences - It includes the following columns:</b>
                     <br><b>Original Sentence Position:</b> Relative Index of the Sentence in the older version that to matched to a sentence in the newer version.
                     <br><b>Matched Sentence Position:</b> Relative Index of the Sentence in the newer version that was matched to by a sentence in the older version.
                     <br><b>Semantic Similarity:</b> The semantic similarity of the matched sentence pair.
