@@ -3,7 +3,7 @@ numpy==1.26.4
 scipy
 nltk
 spacy
-matplotlib
+matplotlib==3.5.2
 scikit-learn
 torch
 streamlit
