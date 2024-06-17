@@ -1,4 +1,3 @@
-import pke
 import spacy
 #nlp = spacy.load("en_core_web_sm")
 from keybert import KeyBERT
@@ -7,66 +6,11 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import yake
 
-def keybert(documents, ngram_range=(1, 1), stop_words=None, top_n=5, model=None, diversity=0.5, use_mmr=False,
-           use_maxsum=True, nr_candidates=20, highlight=False):
-    """Extract Keywords from one or more Documents.
-    
-    Extracts Keywords from n input Documents and puts them in to
-    dictonary, where the keys are the version number of the document
-    and the values the corresponding keywords for that version.
-
-    Args:
-        documents (list) : List of Strings/Documents
-        nr_candidates (int): Number of candidates for max sum distance
-        diversity (float) : Diversity for MMR the higher the more diverse
-        model (string / model) : Any model from sentenceTransomers or hugging face Transformers
-        
-    Returns:
-        Dictonary of Keywords
-    """
-    number_of_documents = len(documents)
-    kws = {version:[] for version in range(number_of_documents)}
-    kw_model = KeyBERT(model=model)
-    for current in range(number_of_documents):
-        kws[current] = kw_model.extract_keywords(documents[current],
-                                                 keyphrase_ngram_range=ngram_range,
-                                                 stop_words=stop_words,
-                                                 top_n=top_n,
-                                                 use_mmr=use_mmr,
-                                                 diversity=diversity,
-                                                 use_maxsum=use_maxsum,
-                                                 nr_candidates=nr_candidates,
-                                                 highlight=highlight
-                                                )
-        
-    return kws
-    
-
-def extract_current(document, extractor=pke.unsupervised.YAKE, lang="en", n_best=10):
-    extractor = extractor()
-    extractor.load_document(input=document, language=lang)
-    
-    extractor.candidate_selection()
-
-    extractor.candidate_weighting()
-
-    keyphrases = extractor.get_n_best(n_best)
-    
-    return keyphrases
-
 def print_current_keywords(keywords):
     for keyword in keywords:
         print(keyword)
     print("\n")    
     
-def extract(documents, extractor=pke.unsupervised.YAKE, lang="en", n_best=10):
-    number_of_documents = len(documents)
-    kws = {version:[] for version in range(number_of_documents)}
-    for current in range(number_of_documents):
-        kws[current] = extract_current(documents[current], extractor,lang=lang, n_best=n_best)
-        
-    return kws
-
 def extract_yake(documents, language="en", max_ngram_size=1, 
                  deduplication_threshold = 0.9, deduplication_algo = 'seqm',
                  windowSize=1,numOfKeywords=10):
