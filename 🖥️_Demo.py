@@ -84,7 +84,7 @@ st.sidebar.markdown("# Advanced Settings")
 
 nltk.download("punkt")
 nltk.download('stopwords')
-
+nltk.download('punkt_tab')
 
 # Dictonary of preset versioned Documents
 with open("docs.pkl", "rb") as file:
