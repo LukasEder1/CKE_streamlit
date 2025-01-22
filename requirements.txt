@@ -12,6 +12,6 @@ cdifflib
 yake
 summa
 keybert
-st-annotated-text
+st-annotated-text==3.0
 pysbd
 sumy
